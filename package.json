@@ -1,0 +1,20 @@
+{
+    "name": "optioin-portfolio-analysis",
+    "version": "0.1.0",
+    "description": "A project to to analyze my portfolio performance",
+    "main": "lib/src/index.js",
+    "typings": "lib/src/index.d.ts",
+    "repository": "github.com/clardizabal/options-portfolio-analysis",
+    "author": "clardizabal",
+    "license": "MIT",
+    "devDependencies": {
+        "@types/jest": "^22.1.1",
+        "jest": "^22.1.4",
+        "ts-jest": "^22.0.2",
+        "typescript": "^2.7.1"
+    },
+    "scripts": {
+        "compile": "tsc",
+        "test": "jest --env=node --colors --coverage test"
+    }
+}
