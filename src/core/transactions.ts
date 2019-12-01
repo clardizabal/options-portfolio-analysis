@@ -3,7 +3,8 @@ export type TransactionType =  'Trade' | 'Money Movement' | 'Receive Deliver';
 type Strategies = 'BUTTERFLY' | 'STRANGLE' | 'STRADDLE' | 'IRON_CONDOR' | 'VERTICAL_SPREAD' | 'NAKED' | 'CUSTOM';
 export type InstrumentType = 'Equity Option';
 export type CallOrPut = 'CALL' | 'PUT';
-
+type optionsMap = {[key: string] : Option};
+type transactionsMap = {[key: string] : TransactionDTO};
 
 export class Option {
     callOrPut: CallOrPut;
@@ -60,9 +61,10 @@ export class TransactionDTO {
 export class Trade {
     ticker: string = '';
     value: number = 0;
-    legs: {[key: string] : Option} = {};
+    legs: optionsMap = {};
     strategy: Strategies = 'NAKED';
     type: 'debit' | 'credit' = 'debit';
+    profitLoss: number = 0;
     constructor(legs: TransactionDTO[]) {
         this.ticker = legs[0].ticker;
         this.parseTrade(legs);
@@ -76,6 +78,20 @@ export class Trade {
             sum[`${leg.strike}${leg.callOrPut}${leg.expirationDate}`] = new Option(leg);
             return sum;
         }, this.legs);
+    }
+    closeLegs = (legs: optionsMap, transactions: transactionsMap) => {
+        const legsToClose = optionsToClose(transactions);
+        legsToClose.forEach((leg: string) => {
+            this.value += legs[leg].value;
+            delete this.legs[leg];
+        });
+    }
+    roll = (legs: optionsMap, transactions: transactionsMap) => {
+        const legsToOpen = optionsToOpen(transactions);
+        legsToOpen.forEach((leg: string) => {
+            this.legs[leg] = legs[leg];
+            this.value += legs[leg].value;
+        });
     }
     private setTradeType = (legs: TransactionDTO[]) => {
         let sum = 0;
@@ -132,22 +148,22 @@ export const closingTrade = (queue: TransactionDTO[]): boolean => {
     }, true);
 }
 
-export const optionsToClose = (legs: {[key: string] : TransactionDTO}): string[] => {
+export const optionsToClose = (legs: transactionsMap): string[] => {
     return Object.keys(legs).filter((key) => {
         return legs[key].action === 'SELL_TO_CLOSE'
             || legs[key].action === 'BUY_TO_CLOSE';
     })
 }
 
-export const optionsToOpen = (legs: {[key: string] : TransactionDTO}): string[] => {
+export const optionsToOpen = (legs: transactionsMap): string[] => {
     return Object.keys(legs).filter((key) => {
         return legs[key].action === 'SELL_TO_OPEN'
             || legs[key].action === 'BUY_TO_OPEN';
     })
 }
 
-export const parseLegs = (legs: TransactionDTO[]): {[key: string] : TransactionDTO} => {
-    const _legs: {[key: string] : TransactionDTO} = {};
+export const parseLegs = (legs: TransactionDTO[]): transactionsMap => {
+    const _legs: transactionsMap = {};
     return legs.reduce((sum, leg: TransactionDTO) => {
         sum[`${leg.strike}${leg.callOrPut}${leg.expirationDate}`] = leg;
         return sum;
@@ -169,6 +185,7 @@ export class Portfolio {
     parseTransactions = (transactions: Transaction[]) => {
         let queue: TransactionDTO[] = [];
         let lastTransaction: TransactionDTO;
+        console.log(transactions);
             transactions.forEach((transaction: Transaction) => {
                 const currentTransaction = new TransactionDTO(transaction);
                 if (queue.length === 0) {
@@ -181,13 +198,13 @@ export class Portfolio {
                     if (openingTrade(queue)) {
                         this.addTrade(currentTrade);
                     } else if (closingTrade(queue)){
-                        // console.log('close this trade');
-                        const legs = parseLegs(queue);
-                        this.closeTrade(currentTrade, legs);
+                        console.log('close this trade', currentTrade);
+                        const transactions = parseLegs(queue);
+                        this.closeTrade(currentTrade, transactions);
                     } else if (adjustmentTrade(queue)) {
                         // console.log('adjust this trade');
-                        const legs = parseLegs(queue);
-                        this.adjustTrade(currentTrade, legs);
+                        const transactions = parseLegs(queue);
+                        this.adjustTrade(currentTrade, transactions);
                     }
                     // need a default case
                     queue = [currentTransaction];
@@ -203,26 +220,17 @@ export class Portfolio {
     }
 
     // Close an existing trade
-    closeTrade = (trade: Trade, transactions: {[key: string] : TransactionDTO}) => {
+    closeTrade = (trade: Trade, transactions: transactionsMap) => {
         const ticker: string = trade.ticker;
-        const legsToClose = optionsToClose(transactions);
         const _trade = this.trades[ticker];
-        legsToClose.forEach((leg: string) => {
-            delete _trade.legs[leg];
-        });
+        _trade.closeLegs(trade.legs, transactions);
     }
 
     // Adjust an existing trade
-    adjustTrade = (trade: Trade, transactions: {[key: string] : TransactionDTO}) => {
+    adjustTrade = (trade: Trade, transactions: transactionsMap) => {
         const ticker: string = trade.ticker;
-        const legsToClose = optionsToClose(transactions);
-        const legsToOpen = optionsToOpen(transactions);
         const _trade = this.trades[ticker];
-        legsToClose.forEach((leg: string) => {
-            delete _trade.legs[leg];
-        });
-        legsToOpen.forEach((leg: string) => {
-            _trade.legs[leg] = trade.legs[leg];
-        });
+        _trade.closeLegs(trade.legs, transactions);
+        _trade.roll(trade.legs, transactions);
     }
 }

@@ -8,7 +8,10 @@ import {
     Portfolio,
     Option,
     adjustmentTrade,
-    closingTrade
+    closingTrade,
+    InstrumentType,
+    TransactionType,
+    parseLegs
 } from '../src';
 
 describe('Evaluate Portfolio', () => {
@@ -271,45 +274,49 @@ describe('Evaluate Portfolio', () => {
     test('closing a trade', () => {
         const snapTrade = portfolio.trades['SNAP'];
         expect(snapTrade).toBeInstanceOf(Trade);
+        expect(snapTrade.value).toBe(31);
         const snapLegs = snapTrade.legs;
         expect(Object.keys(snapLegs).length).toBe(0);
+    });
 
-        const closingTrade: Transaction[] = 
-            [{
-                callOrPut: 'CALL' as CallOrPut,
-                ticker: 'QQQ' as CallOrPut,
-                instrumentType: 'Equity Option',
-                commissions: 0,
-                type: 'Trade',
-                fees: 0,
-                action: 'SELL_TO_CLOSE' as Action,
-                value: 835,
-                quantity: 1,
-                strike: 167,
-                expirationDate: '3/15/2019',
-                date: '2019-02-25T11:07:12-0500',
-            },
-            {
-                callOrPut: 'CALL' as CallOrPut,
-                ticker: 'QQQ' as CallOrPut,
-                instrumentType: 'Equity Option',
-                commissions: 0,
-                type: 'Trade',
-                fees: 0,
-                action: 'BUY_TO_CLOSE',
-                value: -1020,
-                quantity: 1,
-                strike: 165,
-                expirationDate: '3/15/2019',
-                date: '2019-02-25T11:07:12-0500',
-            }];
-        portfolio.parseTransactions(closingTrade);
+    test('closing a trade after a roll', () => {
+        const closingTransactions = [{
+            callOrPut: 'CALL' as CallOrPut,
+            ticker: 'QQQ' as CallOrPut,
+            instrumentType: 'Equity Option' as InstrumentType,
+            commissions: 0,
+            // type: 'Trade' as TransactionType,
+            // fees: 0,
+            action: 'SELL_TO_CLOSE' as Action,
+            value: 835,
+            quantity: 1,
+            strike: 167,
+            expirationDate: '3/15/2019',
+            date: '2019-02-25T11:07:12-0500',
+        },
+        {
+            callOrPut: 'CALL' as CallOrPut,
+            ticker: 'QQQ' as CallOrPut,
+            instrumentType: 'Equity Option' as InstrumentType,
+            commissions: 0,
+            // type: 'Trade' as TransactionType,
+            // fees: 0,
+            action: 'BUY_TO_CLOSE' as Action,
+            value: -1020,
+            quantity: 1,
+            strike: 165,
+            expirationDate: '3/15/2019',
+            date: '2019-02-25T11:07:12-0500',
+        }];
+        portfolio.closeTrade(
+            new Trade(closingTransactions),
+            parseLegs(closingTransactions));
         
         const qqqTrade = portfolio.trades['QQQ'];
         expect(qqqTrade).toBeInstanceOf(Trade);
+        expect(qqqTrade.value).toBe(-111);
         const qqqLegs = qqqTrade.legs;
         expect(qqqLegs['165CALL3/15/2019']).toBeUndefined;
         expect(qqqLegs['167CALL3/15/2019']).toBeUndefined;
-        // console.log(portfolio);
     });
 });
