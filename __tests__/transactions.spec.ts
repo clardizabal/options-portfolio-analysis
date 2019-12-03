@@ -24,9 +24,9 @@ describe('Evaluate Portfolio', () => {
             callOrPut: 'CALL' as CallOrPut,
             ticker: 'QQQ' as CallOrPut,
             instrumentType: 'Equity Option',
-            commissions: 0,
+            commissions: -1,
             type: 'Trade',
-            fees: 0,
+            fees: -0.14,
             action: 'SELL_TO_OPEN' as Action,
             value: 528,
             quantity: 1,
@@ -38,9 +38,9 @@ describe('Evaluate Portfolio', () => {
             callOrPut: 'CALL' as CallOrPut,
             ticker: 'QQQ' as CallOrPut,
             instrumentType: 'Equity Option',
-            commissions: 0,
+            commissions: -1,
             type: 'Trade',
-            fees: 0,
+            fees: -0.14,
             action: 'BUY_TO_OPEN',
             value: -414,
             quantity: 1,
@@ -52,9 +52,9 @@ describe('Evaluate Portfolio', () => {
             callOrPut: 'CALL' as CallOrPut,
             ticker: 'QQQ' as CallOrPut,
             instrumentType: 'Equity Option',
-            commissions: 0,
+            commissions: -1,
             type: 'Trade',
-            fees: 0,
+            fees: -0.14,
             action: 'SELL_TO_OPEN' as Action,
             value: 260,
             quantity: 1,
@@ -66,9 +66,9 @@ describe('Evaluate Portfolio', () => {
             callOrPut: 'CALL' as CallOrPut,
             ticker: 'QQQ' as CallOrPut,
             instrumentType: 'Equity Option',
-            commissions: 0,
+            commissions: -1,
             type: 'Trade',
-            fees: 0,
+            fees: -0.14,
             action: 'BUY_TO_OPEN',
             value: -190,
             quantity: 1,
@@ -82,7 +82,7 @@ describe('Evaluate Portfolio', () => {
             instrumentType: 'Equity Option',
             commissions: 0,
             type: 'Trade',
-            fees: 0,
+            fees: -0.14,
             action: 'SELL_TO_CLOSE',
             value: 238,
             quantity: 1,
@@ -96,7 +96,7 @@ describe('Evaluate Portfolio', () => {
             instrumentType: 'Equity Option',
             commissions: 0,
             type: 'Trade',
-            fees: 0,
+            fees: -0.14,
             action: 'BUY_TO_CLOSE',
             value: -348,
             quantity: 1,
@@ -108,9 +108,9 @@ describe('Evaluate Portfolio', () => {
             callOrPut: 'PUT' as CallOrPut,
             ticker: 'XOP' as CallOrPut,
             instrumentType: 'Equity Option',
-            commissions: 0,
+            commissions: -1,
             type: 'Trade',
-            fees: 0,
+            fees: -0.14,
             action: 'SELL_TO_OPEN' as Action,
             value: 79,
             quantity: 1,
@@ -122,9 +122,9 @@ describe('Evaluate Portfolio', () => {
             callOrPut: 'CALL' as CallOrPut,
             ticker: 'XOP' as CallOrPut,
             instrumentType: 'Equity Option',
-            commissions: 0,
+            commissions: -1,
             type: 'Trade',
-            fees: 0,
+            fees: -0.14,
             action: 'SELL_TO_OPEN' as Action,
             value: 72,
             quantity: 1,
@@ -136,9 +136,9 @@ describe('Evaluate Portfolio', () => {
             callOrPut: 'PUT' as CallOrPut,
             ticker: 'IWM' as CallOrPut,
             instrumentType: 'Equity Option',
-            commissions: 0,
+            commissions: -1,
             type: 'Trade',
-            fees: 0,
+            fees: -0.14,
             action: 'SELL_TO_OPEN' as Action,
             value: 207,
             quantity: 1,
@@ -150,9 +150,9 @@ describe('Evaluate Portfolio', () => {
             callOrPut: 'PUT' as CallOrPut,
             ticker: 'IWM' as CallOrPut,
             instrumentType: 'Equity Option',
-            commissions: 0,
+            commissions: -1,
             type: 'Trade',
-            fees: 0,
+            fees: -0.14,
             action: 'BUY_TO_OPEN',
             value: -125,
             quantity: 1,
@@ -164,9 +164,9 @@ describe('Evaluate Portfolio', () => {
             callOrPut: 'CALL' as CallOrPut,
             ticker: 'IWM' as CallOrPut,
             instrumentType: 'Equity Option',
-            commissions: 0,
+            commissions: -1,
             type: 'Trade',
-            fees: 0,
+            fees: -0.14,
             action: 'BUY_TO_OPEN',
             value: -46,
             quantity: 1,
@@ -178,9 +178,9 @@ describe('Evaluate Portfolio', () => {
             callOrPut: 'CALL' as CallOrPut,
             ticker: 'IWM' as CallOrPut,
             instrumentType: 'Equity Option',
-            commissions: 0,
+            commissions: -1,
             type: 'Trade',
-            fees: 0,
+            fees: -0.14,
             action: 'SELL_TO_OPEN' as Action,
             value: 145,
             quantity: 1,
@@ -192,9 +192,9 @@ describe('Evaluate Portfolio', () => {
             callOrPut: 'PUT' as CallOrPut,
             ticker: 'SNAP' as CallOrPut,
             instrumentType: 'Equity Option',
-            commissions: 0,
+            commissions: -1,
             type: 'Trade',
-            fees: 0,
+            fees: -0.14,
             action: 'SELL_TO_OPEN' as Action,
             value: 33,
             quantity: 1,
@@ -208,7 +208,7 @@ describe('Evaluate Portfolio', () => {
             instrumentType: 'Equity Option',
             commissions: 0,
             type: 'Trade',
-            fees: 0,
+            fees: -0.14,
             action: 'BUY_TO_CLOSE',
             value: -2,
             quantity: 1,
@@ -220,11 +220,11 @@ describe('Evaluate Portfolio', () => {
             callOrPut: 'PUT' as CallOrPut,
             ticker: 'M' as CallOrPut,
             instrumentType: 'Equity Option',
-            commissions: 0,
+            commissions: -1,
             type: 'Trade',
-            fees: 0,
+            fees: -0.14,
             action: 'SELL_TO_OPEN' as Action,
-            value: 33,
+            value: 66,
             quantity: 1,
             strike: 22,
             expirationDate: '5/17/2019',
@@ -236,7 +236,7 @@ describe('Evaluate Portfolio', () => {
             instrumentType: 'Equity Option',
             commissions: 0,
             type: 'Trade',
-            fees: 0,
+            fees: -0.14,
             action: 'BUY_TO_CLOSE',
             value: -33,
             quantity: 1,
@@ -244,17 +244,48 @@ describe('Evaluate Portfolio', () => {
             expirationDate: '5/17/2019',
             date: '2019-04-05T13:28:28-0400',
         },
+        {
+            callOrPut: 'PUT' as CallOrPut,
+            ticker: 'X',
+            instrumentType: 'Equity Option',
+            commissions: -1,
+            type: 'Trade',
+            fees: -0.14,
+            action: 'SELL_TO_OPEN' as Action,
+            value: 48,
+            quantity: 1,
+            strike: 13,
+            expirationDate: '7/19/2019',
+            date: '2019-06-13T10:23:10-0400',
+        },
+        {
+            callOrPut: 'CALL' as CallOrPut,
+            ticker: 'X',
+            instrumentType: 'Equity Option',
+            commissions: -1,
+            type: 'Trade',
+            fees: -0.14,
+            action: 'SELL_TO_OPEN',
+            value: 55,
+            quantity: 1,
+            strike: 15,
+            expirationDate: '7/19/2019',
+            date: '2019-06-13T10:23:10-0400',
+        },
     ]
     portfolio.parseTransactions(transactions);
     test('evaluate correct number of trades', () => {
-        expect(portfolio.numberOfTrades).toBe(5);
-        expect(portfolio.trades['XOP']).toBeInstanceOf(Trade);
-        expect(portfolio.trades['IWM']).toBeInstanceOf(Trade);
-        expect(portfolio.trades['QQQ']).toBeInstanceOf(Trade);
+        expect(portfolio.numberOfTrades).toBe(6);
+        expect(portfolio.totalFees).toBe(-2.52);
+        for(let key in portfolio.trades) {
+            expect(portfolio.trades[key]).toBeInstanceOf(Trade);
+        }
     });
-
+    
     test('updates trade with adjusted legs', () => {
-        const adjustedTrade = portfolio.trades['QQQ'];
+        // TODO: have a function that returns all trades of an underlying mapped by id
+        const adjustedTrades = portfolio.getTradesByTicker('QQQ');
+        const adjustedTrade = adjustedTrades[0];
         expect(adjustedTrade).toBeInstanceOf(Trade);
         const mappedLegs = adjustedTrade.legs;
         expect(mappedLegs['165CALL3/15/2019']).toBeInstanceOf(Option);
@@ -267,12 +298,9 @@ describe('Evaluate Portfolio', () => {
 
     });
 
-    test('adjusting a trade', () => {
-
-    });
-
     test('closing a trade', () => {
-        const snapTrade = portfolio.trades['SNAP'];
+        const snapTrades = portfolio.getTradesByTicker('SNAP');
+        const snapTrade = snapTrades[0];
         expect(snapTrade).toBeInstanceOf(Trade);
         expect(snapTrade.value).toBe(31);
         const snapLegs = snapTrade.legs;
@@ -284,9 +312,9 @@ describe('Evaluate Portfolio', () => {
             callOrPut: 'CALL' as CallOrPut,
             ticker: 'QQQ' as CallOrPut,
             instrumentType: 'Equity Option' as InstrumentType,
+            type: 'Trade' as TransactionType,
+            fees: -0.14,
             commissions: 0,
-            // type: 'Trade' as TransactionType,
-            // fees: 0,
             action: 'SELL_TO_CLOSE' as Action,
             value: 835,
             quantity: 1,
@@ -298,9 +326,9 @@ describe('Evaluate Portfolio', () => {
             callOrPut: 'CALL' as CallOrPut,
             ticker: 'QQQ' as CallOrPut,
             instrumentType: 'Equity Option' as InstrumentType,
+            type: 'Trade' as TransactionType,
             commissions: 0,
-            // type: 'Trade' as TransactionType,
-            // fees: 0,
+            fees: -0.14,
             action: 'BUY_TO_CLOSE' as Action,
             value: -1020,
             quantity: 1,
@@ -308,15 +336,108 @@ describe('Evaluate Portfolio', () => {
             expirationDate: '3/15/2019',
             date: '2019-02-25T11:07:12-0500',
         }];
-        portfolio.closeTrade(
-            new Trade(closingTransactions),
-            parseLegs(closingTransactions));
+        // portfolio.closeTrade(
+        //     new Trade(closingTransactions),
+        //     parseLegs(closingTransactions));
+        portfolio.parseTransactions(closingTransactions);
         
-        const qqqTrade = portfolio.trades['QQQ'];
+        const qqqTrades = portfolio.getTradesByTicker('QQQ');
+        const qqqTrade = qqqTrades[0];
         expect(qqqTrade).toBeInstanceOf(Trade);
         expect(qqqTrade.value).toBe(-111);
         const qqqLegs = qqqTrade.legs;
         expect(qqqLegs['165CALL3/15/2019']).toBeUndefined;
         expect(qqqLegs['167CALL3/15/2019']).toBeUndefined;
+
+        // console.log(portfolio.trades);
+    });
+
+    test('rolling a trade', () => {
+        const rollTransactions = [
+            {
+                callOrPut: 'PUT' as CallOrPut,
+                ticker: 'X',
+                instrumentType: 'Equity Option' as InstrumentType,
+                commissions: -1,
+                type: 'Trade' as TransactionType,
+                fees: -0.14,
+                action: 'SELL_TO_OPEN' as Action,
+                value: 107,
+                quantity: 1,
+                strike: 14,
+                expirationDate: '8/16/2019',
+                date: '2019-06-25T09:42:02-0400',
+            },
+            {
+                callOrPut: 'CALL' as CallOrPut,
+                ticker: 'X',
+                instrumentType: 'Equity Option' as InstrumentType,
+                commissions: 0,
+                type: 'Trade' as TransactionType,
+                fees: -0.14,
+                action: 'BUY_TO_CLOSE' as Action,
+                value: -45,
+                quantity: 1,
+                strike: 15,
+                expirationDate: '7/19/2019',
+                date: '2019-06-25T09:42:02-0400',
+            },
+            {
+                callOrPut: 'CALL' as CallOrPut,
+                ticker: 'X',
+                instrumentType: 'Equity Option' as InstrumentType,
+                commissions: -1,
+                type: 'Trade' as TransactionType,
+                fees: -0.14,
+                action: 'SELL_TO_OPEN' as Action,
+                value: 58,
+                quantity: 1,
+                strike: 16,
+                expirationDate: '8/16/2019',
+                date: '2019-06-25T09:42:02-0400',
+            },
+            {
+                callOrPut: 'PUT' as CallOrPut,
+                ticker: 'X',
+                instrumentType: 'Equity Option' as InstrumentType,
+                commissions: 0,
+                type: 'Trade' as TransactionType,
+                fees: -0.14,
+                action: 'BUY_TO_CLOSE' as Action,
+                value: -27,
+                quantity: 1,
+                strike: 13,
+                expirationDate: '7/19/2019',
+                date: '2019-06-25T09:42:02-0400',
+            },
+        ];
+
+        let xTrades = portfolio.getTradesByTicker('X');
+        let xTrade = xTrades[0];
+        let xLegs = xTrade.legs;
+        expect(xLegs['13PUT7/19/2019']).toBeInstanceOf(Option);
+        expect(xLegs['15CALL7/19/2019']).toBeInstanceOf(Option);
+        portfolio.parseTransactions(rollTransactions);
+        
+        xTrades = portfolio.getTradesByTicker('X');
+        xTrade = xTrades[0];
+        expect(xTrade).toBeInstanceOf(Trade);
+        expect(xTrade.value).toBe(196);
+        xLegs = xTrade.legs;
+        expect(xLegs['14PUT8/16/2019']).toBeInstanceOf(Option);
+        expect(xLegs['16CALL8/16/2019']).toBeInstanceOf(Option);
+        expect(xLegs['13PUT7/19/2019']).toBeUndefined;
+        expect(xLegs['15CALL7/19/2019']).toBeUndefined;
+    });
+
+    test('portfolio has correct P&L', () => {
+        // console.log(portfolio.tradeHistory);
+        expect(portfolio.tradeHistory.length).toBe(3);
+        const rpl = portfolio.tradeHistory.reduce((sum, trade) => {
+            return sum += trade.profitLoss;
+        }, 0)
+        expect(portfolio.profit).toBe(rpl);
+        expect(portfolio.totalCommission).toBe(-16);
+        expect(portfolio.totalFees).toBe(-3.36);
     });
 });

@@ -1,3 +1,5 @@
+import { uuid } from 'uuidv4';
+import { addDecimal } from './util';
 export type Action = 'BUY_TO_CLOSE' | 'SELL_TO_OPEN' | 'SELL_TO_CLOSE' | 'BUY_TO_OPEN';
 export type TransactionType =  'Trade' | 'Money Movement' | 'Receive Deliver';
 type Strategies = 'BUTTERFLY' | 'STRANGLE' | 'STRADDLE' | 'IRON_CONDOR' | 'VERTICAL_SPREAD' | 'NAKED' | 'CUSTOM';
@@ -38,6 +40,7 @@ export class TransactionDTO {
     value: number;
     quantity: number;
     commissions: number;
+    fees: number;
     ticker: string;
     date: string;
     expirationDate: string;
@@ -50,6 +53,7 @@ export class TransactionDTO {
         this.value = dto.value;
         this.quantity = dto.quantity;
         this.commissions = dto.commissions;
+        this.fees = dto.fees;
         this.ticker = dto.ticker;
         this.date = dto.date;
         this.expirationDate = dto.expirationDate;
@@ -59,14 +63,19 @@ export class TransactionDTO {
 }
 
 export class Trade {
+    id: string;
     ticker: string = '';
     value: number = 0;
     legs: optionsMap = {};
     strategy: Strategies = 'NAKED';
     type: 'debit' | 'credit' = 'debit';
     profitLoss: number = 0;
+    fees: number = 0;
+    commissions: number = 0;
+
     constructor(legs: TransactionDTO[]) {
         this.ticker = legs[0].ticker;
+        this.id = uuid();
         this.parseTrade(legs);
     }
 
@@ -74,6 +83,7 @@ export class Trade {
         this.setTradeType(legs);
         this.setStrategyType(legs);
         this.setTradeValue(legs);
+        this.setCommissionAndFees(legs);
         this.legs = legs.reduce((sum, leg: TransactionDTO) => {
             sum[`${leg.strike}${leg.callOrPut}${leg.expirationDate}`] = new Option(leg);
             return sum;
@@ -120,8 +130,17 @@ export class Trade {
     }
 
     private setTradeValue = (legs: TransactionDTO[]) => {
-        this.value = legs.reduce((sum, option) => {
-            return sum + option.value;
+        this.value = legs.reduce((sum, transaction) => {
+            return sum + transaction.value;
+        }, 0);
+    }
+
+    private setCommissionAndFees = (legs: TransactionDTO[]) => {
+        this.fees = legs.reduce((sum, transaction) => {
+            return sum + transaction.fees;
+        }, 0);
+        this.commissions = legs.reduce((sum, transaction) => {
+            return sum + transaction.commissions;
         }, 0);
     }
 }
@@ -177,7 +196,9 @@ export class Portfolio {
     tradesOpen: number = 0;
     tradesClosed: number = 0;
     trades: {[key: string] : Trade} = {};
-    tradeHistory = [];
+    tradeHistory: any[] = [];
+    totalFees: number = 0;
+    totalCommission: number = 0;
 
     constructor() {
     }
@@ -185,24 +206,24 @@ export class Portfolio {
     parseTransactions = (transactions: Transaction[]) => {
         let queue: TransactionDTO[] = [];
         let lastTransaction: TransactionDTO;
-        console.log(transactions);
             transactions.forEach((transaction: Transaction) => {
                 const currentTransaction = new TransactionDTO(transaction);
+                // Add commissions and fees
+                this.totalCommission += currentTransaction.commissions;
+                this.totalFees = addDecimal(this.totalFees, currentTransaction.fees);
                 if (queue.length === 0) {
                     queue.push(currentTransaction);
                 } else if (currentTransaction.date === lastTransaction.date) {
                     queue.push(currentTransaction);
                 } else {
-                    // check if opening trade
                     const currentTrade = new Trade(queue);
+                    // this.updateCommisionAndFees(currentTrade);
                     if (openingTrade(queue)) {
                         this.addTrade(currentTrade);
                     } else if (closingTrade(queue)){
-                        console.log('close this trade', currentTrade);
                         const transactions = parseLegs(queue);
                         this.closeTrade(currentTrade, transactions);
                     } else if (adjustmentTrade(queue)) {
-                        // console.log('adjust this trade');
                         const transactions = parseLegs(queue);
                         this.adjustTrade(currentTrade, transactions);
                     }
@@ -211,26 +232,89 @@ export class Portfolio {
                 }
                 lastTransaction = currentTransaction;
         });
+
+        // we have to account for the last trade
+        const currentTrade = new Trade(queue);
+        if (openingTrade(queue)) {
+            this.addTrade(currentTrade);
+        } else if (closingTrade(queue)){
+            const transactions = parseLegs(queue);
+            this.closeTrade(currentTrade, transactions);
+        } else if (adjustmentTrade(queue)) {
+            const transactions = parseLegs(queue);
+            this.adjustTrade(currentTrade, transactions);
+        }
+    }
+
+    getTradesByTicker = (ticker: string) => {
+        return Object.keys(this.trades).filter((id) => {
+            return this.trades[id].ticker === ticker;
+        }).map((id) => this.trades[id]);
     }
 
     // Add a new trade to trade history and open positions
     addTrade = (trade: Trade) => {
-        this.trades[trade.ticker] = trade;
+        // let index = 0;
+        // while (this.trades[`${trade.ticker}_${index}`]) {
+        //     index++;
+        // }
+        // this.trades[`${trade.ticker}_${index}`] = trade;
+        // this.trades[trade.ticker] = trade;
+        this.trades[uuid()] = trade;
         this.numberOfTrades++;
+        // this.updateCommisionAndFees(trade);
     }
+    
+    // private updateCommisionAndFees = (trade: Trade) => {
+    //     this.totalCommission += trade.commissions;
+    //     this.totalFees = addDecimal(this.totalFees, trade.fees);
+    // }
 
     // Close an existing trade
     closeTrade = (trade: Trade, transactions: transactionsMap) => {
+        // const ticker: string = `${trade.ticker}_0`;
         const ticker: string = trade.ticker;
-        const _trade = this.trades[ticker];
-        _trade.closeLegs(trade.legs, transactions);
+        // const _trade = this.trades[ticker];
+
+        const _trades: Trade[] = Object.keys(this.trades).filter((key) => {
+            return this.trades[key].ticker === ticker;
+        }).map((key) => {
+            return this.trades[key];
+        });
+
+        _trades[0].closeLegs(trade.legs, transactions);
+
+        this.logTrade(_trades[0]);
+    }
+
+    logTrade = (trade: Trade) => {
+        const tradeLog = {
+            ticker: trade.ticker,
+            profitLoss: trade.value,
+            strategy: trade.strategy,
+        }
+        this.tradeHistory.push(tradeLog);
+        this.profit += trade.value;
     }
 
     // Adjust an existing trade
     adjustTrade = (trade: Trade, transactions: transactionsMap) => {
+        // const ticker: string = `${trade.ticker}_0`;
         const ticker: string = trade.ticker;
-        const _trade = this.trades[ticker];
-        _trade.closeLegs(trade.legs, transactions);
-        _trade.roll(trade.legs, transactions);
+        // const _trade = this.trades[ticker];
+        // let _trade: Trade;
+        const _trades: Trade[] = Object.keys(this.trades).filter((key) => {
+            return this.trades[key].ticker === ticker;
+        }).map((key) => {
+            return this.trades[key];
+        });
+        // console.log('adjust trade: ', _trades);
+        // let _trade: Trade;
+        // if (_trades.length === 1) {
+        //     _trade = _trades[0];
+        // }
+        _trades[0].closeLegs(trade.legs, transactions);
+        _trades[0].roll(trade.legs, transactions);
+        // this.updateCommisionAndFees(trade);
     }
 }
