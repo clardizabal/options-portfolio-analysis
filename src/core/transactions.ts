@@ -5,6 +5,7 @@ export type TransactionType =  'Trade' | 'Money Movement' | 'Receive Deliver';
 type Strategies = 'BUTTERFLY' | 'STRANGLE' | 'STRADDLE' | 'IRON_CONDOR' | 'VERTICAL_SPREAD' | 'NAKED' | 'CUSTOM';
 export type InstrumentType = 'Equity Option';
 export type CallOrPut = 'CALL' | 'PUT';
+export type tradeStatus = 'open' | 'closed';
 type optionsMap = {[key: string] : Option};
 type transactionsMap = {[key: string] : TransactionDTO};
 
@@ -72,9 +73,12 @@ export class Trade {
     profitLoss: number = 0;
     fees: number = 0;
     commissions: number = 0;
+    status: tradeStatus = 'open';
+    date: string;
 
     constructor(legs: TransactionDTO[]) {
         this.ticker = legs[0].ticker;
+        this.date = legs[0].date;
         this.id = uuid();
         this.parseTrade(legs);
     }
@@ -92,16 +96,35 @@ export class Trade {
     closeLegs = (legs: optionsMap, transactions: transactionsMap) => {
         const legsToClose = optionsToClose(transactions);
         legsToClose.forEach((leg: string) => {
-            this.value += legs[leg].value;
-            delete this.legs[leg];
+            if (this.legs.hasOwnProperty(leg)) {
+                this.value += legs[leg].value;
+                this.profitLoss = this.value; 
+                if (legs[leg].quantity === this.legs[leg].quantity) {
+                    delete this.legs[leg];
+                    // we have to mutate to object here, so that the next time this function runs
+                    // the we close legs based on the updated quantity...
+                    legs[leg].quantity = 0;
+                } else if (legs[leg].quantity < this.legs[leg].quantity) {
+                    this.legs[leg].quantity -= legs[leg].quantity;
+                    legs[leg].quantity = 0;
+                } else {
+                    legs[leg].quantity -= this.legs[leg].quantity;
+                    delete this.legs[leg];
+                }
+            }
         });
+        if (Object.keys(this.legs).length === 0) {
+            this.status = 'closed';
+        }
     }
+
     roll = (legs: optionsMap, transactions: transactionsMap) => {
         const legsToOpen = optionsToOpen(transactions);
         legsToOpen.forEach((leg: string) => {
             this.legs[leg] = legs[leg];
             this.value += legs[leg].value;
         });
+        this.status = 'open';
     }
     private setTradeType = (legs: TransactionDTO[]) => {
         let sum = 0;
@@ -116,11 +139,13 @@ export class Trade {
             this.strategy = 'NAKED';
         } else if (legs.length === 2) {
             const isVertical = legs[0].callOrPut === legs[1].callOrPut;
-            if (isVertical) {
+            const isSameQuantity = legs[0].quantity === legs[1].quantity;
+            if (isVertical && isSameQuantity) {
                 this.strategy = 'VERTICAL_SPREAD';
-            }
-            if (this.type === 'credit' && !isVertical) {
+            } else if (this.type === 'credit' && !isVertical) {
                 this.strategy = 'STRANGLE';
+            } else {
+                this.strategy = 'CUSTOM';
             }
         } else if (legs.length === 4) {
             this.strategy = 'IRON_CONDOR';
@@ -137,7 +162,7 @@ export class Trade {
 
     private setCommissionAndFees = (legs: TransactionDTO[]) => {
         this.fees = legs.reduce((sum, transaction) => {
-            return sum + transaction.fees;
+            return addDecimal(sum, transaction.fees);
         }, 0);
         this.commissions = legs.reduce((sum, transaction) => {
             return sum + transaction.commissions;
@@ -190,6 +215,13 @@ export const parseLegs = (legs: TransactionDTO[]): transactionsMap => {
 
 }
 
+export const shouldBeOneTrade = (dateOne: string, dateTwo: string) => {
+    const tradeDateOne = new Date(dateOne);
+    const tradeDateTwo = new Date(dateTwo);
+    const SECONDS = 1000;
+    return Math.abs(Number(tradeDateOne) - Number(tradeDateTwo)) <= 3 * SECONDS;
+}
+
 export class Portfolio {
     profit: number = 0;
     numberOfTrades: number = 0;
@@ -213,11 +245,10 @@ export class Portfolio {
                 this.totalFees = addDecimal(this.totalFees, currentTransaction.fees);
                 if (queue.length === 0) {
                     queue.push(currentTransaction);
-                } else if (currentTransaction.date === lastTransaction.date) {
+                } else if (shouldBeOneTrade(currentTransaction.date, lastTransaction.date)) {
                     queue.push(currentTransaction);
                 } else {
                     const currentTrade = new Trade(queue);
-                    // this.updateCommisionAndFees(currentTrade);
                     if (openingTrade(queue)) {
                         this.addTrade(currentTrade);
                     } else if (closingTrade(queue)){
@@ -265,26 +296,37 @@ export class Portfolio {
         // this.updateCommisionAndFees(trade);
     }
     
-    // private updateCommisionAndFees = (trade: Trade) => {
-    //     this.totalCommission += trade.commissions;
-    //     this.totalFees = addDecimal(this.totalFees, trade.fees);
-    // }
-
     // Close an existing trade
     closeTrade = (trade: Trade, transactions: transactionsMap) => {
-        // const ticker: string = `${trade.ticker}_0`;
         const ticker: string = trade.ticker;
-        // const _trade = this.trades[ticker];
-
         const _trades: Trade[] = Object.keys(this.trades).filter((key) => {
-            return this.trades[key].ticker === ticker;
+            return this.trades[key].ticker === ticker
+                && this.trades[key].status === 'open';
         }).map((key) => {
             return this.trades[key];
         });
+        // console.log(transactions);
+        for (let _trade of _trades) {
+            _trade.closeLegs(trade.legs, transactions);
+            if (_trade.status === 'closed') {
+                this.logTrade(_trade);
+            }
+        }
+        // if (_trades.length === 1) {
+        //     _trades[0].closeLegs(trade.legs, transactions);
+        //     if (_trades[0].status === 'closed') {
+        //         this.logTrade(_trades[0]);
+        //     }
+        // } else {
+        //     _trades.forEach((_trade: Trade) => {
+        //         _trade.closeLegs(trade.legs, transactions);
+        //         if (_trade.status === 'closed') {
+        //             this.logTrade(_trade);
+        //         }
+        //     })
+        // }
 
-        _trades[0].closeLegs(trade.legs, transactions);
-
-        this.logTrade(_trades[0]);
+        
     }
 
     logTrade = (trade: Trade) => {
@@ -299,22 +341,13 @@ export class Portfolio {
 
     // Adjust an existing trade
     adjustTrade = (trade: Trade, transactions: transactionsMap) => {
-        // const ticker: string = `${trade.ticker}_0`;
         const ticker: string = trade.ticker;
-        // const _trade = this.trades[ticker];
-        // let _trade: Trade;
         const _trades: Trade[] = Object.keys(this.trades).filter((key) => {
             return this.trades[key].ticker === ticker;
         }).map((key) => {
             return this.trades[key];
         });
-        // console.log('adjust trade: ', _trades);
-        // let _trade: Trade;
-        // if (_trades.length === 1) {
-        //     _trade = _trades[0];
-        // }
         _trades[0].closeLegs(trade.legs, transactions);
         _trades[0].roll(trade.legs, transactions);
-        // this.updateCommisionAndFees(trade);
     }
 }

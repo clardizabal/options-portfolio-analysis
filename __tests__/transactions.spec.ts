@@ -11,7 +11,8 @@ import {
     closingTrade,
     InstrumentType,
     TransactionType,
-    parseLegs
+    parseLegs,
+    addDecimal
 } from '../src';
 
 describe('Evaluate Portfolio', () => {
@@ -232,6 +233,34 @@ describe('Evaluate Portfolio', () => {
         },
         {
             callOrPut: 'PUT' as CallOrPut,
+            ticker: 'EWZ' as CallOrPut,
+            instrumentType: 'Equity Option',
+            commissions: -1,
+            type: 'Trade',
+            fees: -0.14,
+            action: 'BUY_TO_OPEN' as Action,
+            value: -186,
+            quantity: 1,
+            strike: 39,
+            expirationDate: '5/17/2019',
+            date: '2019-03-28T09:32:24-0400',
+        },
+        {
+            callOrPut: 'PUT' as CallOrPut,
+            ticker: 'EWZ' as CallOrPut,
+            instrumentType: 'Equity Option',
+            commissions: -2,
+            type: 'Trade',
+            fees: -0.28,
+            action: 'SELL_TO_OPEN' as Action,
+            value: 222,
+            quantity: 2,
+            strike: 37,
+            expirationDate: '5/17/2019',
+            date: '2019-03-28T09:32:25-0400',
+        },
+        {
+            callOrPut: 'PUT' as CallOrPut,
             ticker: 'M' as CallOrPut,
             instrumentType: 'Equity Option',
             commissions: 0,
@@ -243,6 +272,34 @@ describe('Evaluate Portfolio', () => {
             strike: 22,
             expirationDate: '5/17/2019',
             date: '2019-04-05T13:28:28-0400',
+        },
+        {
+            callOrPut: 'PUT' as CallOrPut,
+            ticker: 'EWZ' as CallOrPut,
+            instrumentType: 'Equity Option',
+            commissions: 0,
+            type: 'Trade',
+            fees: -0.14,
+            action: 'SELL_TO_CLOSE' as Action,
+            value: 51,
+            quantity: 1,
+            strike: 39,
+            expirationDate: '5/17/2019',
+            date: '2019-03-28T09:32:24-0400',
+        },
+        {
+            callOrPut: 'PUT' as CallOrPut,
+            ticker: 'EWZ' as CallOrPut,
+            instrumentType: 'Equity Option',
+            commissions: 0,
+            type: 'Trade',
+            fees: -0.28,
+            action: 'BUY_TO_CLOSE' as Action,
+            value: -48,
+            quantity: 2,
+            strike: 37,
+            expirationDate: '5/17/2019',
+            date: '2019-03-28T09:32:25-0400',
         },
         {
             callOrPut: 'PUT' as CallOrPut,
@@ -272,15 +329,83 @@ describe('Evaluate Portfolio', () => {
             expirationDate: '7/19/2019',
             date: '2019-06-13T10:23:10-0400',
         },
+        {
+            callOrPut: 'PUT' as CallOrPut,
+            ticker: 'X',
+            instrumentType: 'Equity Option',
+            commissions: -2,
+            type: 'Trade',
+            fees: -0.28,
+            action: 'SELL_TO_OPEN',
+            value: 90,
+            quantity: 2,
+            strike: 13,
+            expirationDate: '1/17/2020',
+            date: '2019-11-22T11:35:06-0500',
+        },
+        {
+            callOrPut: 'PUT' as CallOrPut,
+            ticker: 'X',
+            instrumentType: 'Equity Option',
+            commissions: -2,
+            type: 'Trade',
+            fees: -0.28,
+            action: 'SELL_TO_OPEN',
+            value: 95,
+            quantity: 2,
+            strike: 13,
+            expirationDate: '1/17/2020',
+            date: '2019-11-23T11:35:06-0500',
+        },
+        {
+            callOrPut: 'PUT' as CallOrPut,
+            ticker: 'X',
+            instrumentType: 'Equity Option',
+            commissions: 0,
+            type: 'Trade',
+            fees: -0.28,
+            action: 'BUY_TO_CLOSE',
+            value: -45,
+            quantity: 1,
+            strike: 13,
+            expirationDate: '1/17/2020',
+            date: '2019-11-24T11:35:06-0500',
+        },
     ]
     portfolio.parseTransactions(transactions);
     test('evaluate correct number of trades', () => {
-        expect(portfolio.numberOfTrades).toBe(6);
-        expect(portfolio.totalFees).toBe(-2.52);
+        expect(portfolio.numberOfTrades).toBe(9);
+        const commissions = transactions.reduce((sum, transaction) => {
+            return sum += transaction.commissions;
+        }, 0);
+        const fees = transactions.reduce((sum, transaction) => {
+            return addDecimal(sum, transaction.fees);
+        }, 0)
+        expect(portfolio.totalCommission).toBe(commissions);
+        expect(portfolio.totalFees).toBe(fees);
         for(let key in portfolio.trades) {
             expect(portfolio.trades[key]).toBeInstanceOf(Trade);
         }
     });
+
+    test('evaluate a custom trade', () => {
+        const customTrades = portfolio.getTradesByTicker('EWZ');
+        const customTrade = customTrades[0];
+        expect(customTrade).toBeInstanceOf(Trade);
+        expect(customTrade.strategy).toBe('CUSTOM');
+    });
+
+    test('close trade partial quantity', () => {
+        const nakedTrades = portfolio.getTradesByTicker('X');
+        nakedTrades.forEach((trade) => {
+            if (trade.strategy === 'NAKED' && trade.date === '2019-11-22T11:35:06-0500') {
+                expect(trade.legs['13PUT1/17/2020'].quantity).toBe(1);
+            }
+            if (trade.strategy === 'NAKED' && trade.date === '2019-11-23T11:35:06-0500') {
+                expect(trade.legs['13PUT1/17/2020'].quantity).toBe(2);
+            }
+        })
+    })
     
     test('updates trade with adjusted legs', () => {
         // TODO: have a function that returns all trades of an underlying mapped by id
@@ -292,10 +417,6 @@ describe('Evaluate Portfolio', () => {
         expect(mappedLegs['167CALL3/15/2019']).toBeInstanceOf(Option);
         expect(mappedLegs['165CALL3/15/2019'].expirationDate).toBe('3/15/2019');
         expect(mappedLegs['167CALL3/15/2019'].expirationDate).toBe('3/15/2019');
-    });
-
-    test('adding a trade', () => {
-
     });
 
     test('closing a trade', () => {
@@ -336,11 +457,9 @@ describe('Evaluate Portfolio', () => {
             expirationDate: '3/15/2019',
             date: '2019-02-25T11:07:12-0500',
         }];
-        // portfolio.closeTrade(
-        //     new Trade(closingTransactions),
-        //     parseLegs(closingTransactions));
+        // var _test = portfolio.getTradesByTicker('QQQ');
+        // console.log(_test);
         portfolio.parseTransactions(closingTransactions);
-        
         const qqqTrades = portfolio.getTradesByTicker('QQQ');
         const qqqTrade = qqqTrades[0];
         expect(qqqTrade).toBeInstanceOf(Trade);
@@ -431,13 +550,14 @@ describe('Evaluate Portfolio', () => {
     });
 
     test('portfolio has correct P&L', () => {
-        // console.log(portfolio.tradeHistory);
-        expect(portfolio.tradeHistory.length).toBe(3);
+        console.log(portfolio.tradeHistory);
+        expect(portfolio.tradeHistory.length).toBe(4);
         const rpl = portfolio.tradeHistory.reduce((sum, trade) => {
             return sum += trade.profitLoss;
         }, 0)
         expect(portfolio.profit).toBe(rpl);
-        expect(portfolio.totalCommission).toBe(-16);
-        expect(portfolio.totalFees).toBe(-3.36);
+        expect(portfolio.totalCommission).toBe(-23);
+        expect(portfolio.totalFees).toBe(-5.04);
+        console.log(portfolio.trades);
     });
 });
