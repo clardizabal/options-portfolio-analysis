@@ -1,17 +1,12 @@
 import {
     Transaction,
     CallOrPut,
-    TransactionDTO,
     Trade,
     Action,
-    openingTrade,
     Portfolio,
     Option,
-    adjustmentTrade,
-    closingTrade,
     InstrumentType,
     TransactionType,
-    parseLegs,
     addDecimal
 } from '../src';
 
@@ -457,8 +452,6 @@ describe('Evaluate Portfolio', () => {
             expirationDate: '3/15/2019',
             date: '2019-02-25T11:07:12-0500',
         }];
-        // var _test = portfolio.getTradesByTicker('QQQ');
-        // console.log(_test);
         portfolio.parseTransactions(closingTransactions);
         const qqqTrades = portfolio.getTradesByTicker('QQQ');
         const qqqTrade = qqqTrades[0];
@@ -467,8 +460,6 @@ describe('Evaluate Portfolio', () => {
         const qqqLegs = qqqTrade.legs;
         expect(qqqLegs['165CALL3/15/2019']).toBeUndefined;
         expect(qqqLegs['167CALL3/15/2019']).toBeUndefined;
-
-        // console.log(portfolio.trades);
     });
 
     test('rolling a trade', () => {
@@ -550,7 +541,6 @@ describe('Evaluate Portfolio', () => {
     });
 
     test('portfolio has correct P&L', () => {
-        console.log(portfolio.tradeHistory);
         expect(portfolio.tradeHistory.length).toBe(4);
         const rpl = portfolio.tradeHistory.reduce((sum, trade) => {
             return sum += trade.profitLoss;
@@ -558,6 +548,5 @@ describe('Evaluate Portfolio', () => {
         expect(portfolio.profit).toBe(rpl);
         expect(portfolio.totalCommission).toBe(-23);
         expect(portfolio.totalFees).toBe(-5.04);
-        console.log(portfolio.trades);
     });
 });
