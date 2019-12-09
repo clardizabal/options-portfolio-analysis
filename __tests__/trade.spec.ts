@@ -1,10 +1,13 @@
-import { Trade, CallOrPut, InstrumentType, Action } from "../src";
+import { Trade, CallOrPut, InstrumentType, Action, TransactionType } from "../src";
 
 describe('Trade', () => {
     const genericTransaction = {
         instrumentType: 'Equity Option' as InstrumentType,
         commissions: -1,
         fees: -0.14,
+        multiplier: 100,
+        type: 'Trade' as TransactionType,
+        description: 'generic',
     }
     const sellTransaction = {
         ...genericTransaction,
@@ -16,10 +19,10 @@ describe('Trade', () => {
     }
     const SHORT_OTM_PUT = {
         callOrPut: 'PUT' as CallOrPut,
-        ticker: 'IWM' as CallOrPut,
+        ticker: 'IWM',
         value: 207,
         quantity: 1,
-        strike: 141,
+        strike: '141',
         expirationDate: '2/15/2019',
         date: '2019-01-07T10:21:05-0500',
         action: 'SELL_TO_OPEN',
@@ -27,10 +30,10 @@ describe('Trade', () => {
     };
     const LONG_OTM_PUT = {
         callOrPut: 'PUT' as CallOrPut,
-        ticker: 'IWM' as CallOrPut,
+        ticker: 'IWM',
         value: -125,
         quantity: 1,
-        strike: 136,
+        strike: '136',
         expirationDate: '2/15/2019',
         date: '2019-01-07T10:21:05-0500',
         action: 'BUY_TO_OPEN',
@@ -38,10 +41,10 @@ describe('Trade', () => {
     };
     const LONG_OTM_CALL = {
         callOrPut: 'CALL' as CallOrPut,
-        ticker: 'IWM' as CallOrPut,
+        ticker: 'IWM',
         value: -46,
         quantity: 1,
-        strike: 159,
+        strike: '159',
         expirationDate: '2/15/2019',
         date: '2019-01-07T10:21:05-0500',
         action: 'BUY_TO_OPEN',
@@ -49,10 +52,10 @@ describe('Trade', () => {
     };
     const SHORT_OTM_CALL = {
         callOrPut: 'CALL' as CallOrPut,
-        ticker: 'IWM' as CallOrPut,
+        ticker: 'IWM',
         value: 145,
         quantity: 1,
-        strike: 154,
+        strike: '154',
         expirationDate: '2/15/2019',
         date: '2019-01-07T10:21:05-0500',
         action: 'SELL_TO_OPEN',

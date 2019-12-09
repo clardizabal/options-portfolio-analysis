@@ -3,12 +3,13 @@ import { TransactionDTO } from './TransactionDTO';
 
 export class Option {
     callOrPut: CallOrPut;
-    strike: number;
+    strike: string;
     expirationDate: string;
     date: string;
     quantity: number;
     value: number;
     ticker: string;
+    multiplier: number;
 
     constructor(dto: TransactionDTO) {
         this.callOrPut = dto.callOrPut;
@@ -18,5 +19,6 @@ export class Option {
         this.quantity = dto.quantity;
         this.value = dto.value;
         this.ticker = dto.ticker;
+        this.multiplier = dto.multiplier;
     }
 }

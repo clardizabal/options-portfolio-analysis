@@ -26,7 +26,9 @@ export class Trade {
     date: string;
 
     constructor(legs: TransactionDTO[]) {
-        this.ticker = legs[0].ticker;
+        this.ticker = legs.reduce((ticker, leg) => {
+            return ticker || leg.ticker;
+        }, '');
         this.date = legs[0].date;
         this.id = uuid();
         this.parseTrade(legs);
@@ -38,7 +40,11 @@ export class Trade {
         this.setTradeValue(legs);
         this.setCommissionAndFees(legs);
         this.legs = legs.reduce((sum, leg: TransactionDTO) => {
-            sum[`${leg.strike}${leg.callOrPut}${leg.expirationDate}`] = new Option(leg);
+            if (leg.strike && leg.callOrPut && leg.expirationDate) {
+                sum[`${leg.strike}${leg.callOrPut}${leg.expirationDate}`] = new Option(leg);
+            } else {
+                sum[`${leg.description}`] = new Option(leg); 
+            }
             return sum;
         }, this.legs);
     }
@@ -62,6 +68,9 @@ export class Trade {
                 }
             }
         });
+        this.exerciseOrAssignment(transactions).forEach((transaction) => {
+            this.value += transaction.value;
+        });
         if (Object.keys(this.legs).length === 0) {
             this.status = 'closed';
         }
@@ -69,12 +78,40 @@ export class Trade {
 
     roll = (legs: optionsMap, transactions: transactionsMap) => {
         const legsToOpen = optionsToOpen(transactions);
+        // console.log('open after we roll: ', legsToOpen);
         legsToOpen.forEach((leg: string) => {
             this.legs[leg] = legs[leg];
             this.value += legs[leg].value;
         });
         this.status = 'open';
     }
+
+    setMaxLoss = () => {
+        let min: any;
+        const spreadWidth = Object.keys(this.legs).reduce((loss, leg) => {
+            loss = Math.abs(loss - Number(this.legs[leg].strike));
+            min = min || this.legs[leg];
+            min = min && (Number(this.legs[leg].strike) < Number(min.strike)) ? leg : min;
+            return loss;
+        }, 0);
+        const DEFAULT_OPTION_MULTIPLIER = 100;
+        min.value = spreadWidth * DEFAULT_OPTION_MULTIPLIER * -1; /** make it negative bc its a loss */
+
+        this.status = 'expired';
+    }
+
+    setValue = (value: number) => {
+        this.value = value;
+    }
+
+    private exerciseOrAssignment = (transactions: transactionsMap): TransactionDTO[] => {
+        return Object.keys(transactions).filter((key) => {
+            return transactions[key].expirationDate === '';
+        }).map((key) => {
+            return transactions[key];
+        });
+    }
+
     private setTradeType = (legs: TransactionDTO[]) => {
         let sum = 0;
         sum = legs.reduce((sum, leg) => {
@@ -97,7 +134,13 @@ export class Trade {
                 this.strategy = 'CUSTOM';
             }
         } else if (legs.length === 4) {
-            this.strategy = 'IRON_CONDOR';
+            if (legs.filter((leg) => {
+                return leg.type === 'Receive Deliver';
+            }).length === 0 ) {
+                this.strategy = 'IRON_CONDOR';
+            } else {
+                this.strategy = 'EXERCISE_OR_ASSIGNMENT';
+            }
         } else {
             this.strategy = 'CUSTOM';
         }

@@ -4,8 +4,9 @@ import { addDecimal,
     Trade,
     Transaction,
     TransactionDTO,
-    openingTrade, closingTrade, parseLegs,
+    openingTrade, closingTrade, parseLegs, handleExerciesOrAssignment,
 } from '../index';
+import { Strategies } from './types';
 
 export const shouldBeOneTrade = (dateOne: string, dateTwo: string) => {
     const tradeDateOne = new Date(dateOne);
@@ -15,14 +16,18 @@ export const shouldBeOneTrade = (dateOne: string, dateTwo: string) => {
 }
 
 export type transactionsMap = {[key: string] : TransactionDTO};
-
+export interface TradeLog {
+    ticker: string;
+    profitLoss: number;
+    strategy: Strategies;
+}
 export class Portfolio {
     profit: number = 0;
     numberOfTrades: number = 0;
     tradesOpen: number = 0;
     tradesClosed: number = 0;
     trades: {[key: string] : Trade} = {};
-    tradeHistory: any[] = [];
+    tradeHistory: TradeLog[] = [];
     totalFees: number = 0;
     totalCommission: number = 0;
 
@@ -32,11 +37,12 @@ export class Portfolio {
     parseTransactions = (transactions: Transaction[]) => {
         let queue: TransactionDTO[] = [];
         let lastTransaction: TransactionDTO;
-            transactions.forEach((transaction: Transaction) => {
-                const currentTransaction = new TransactionDTO(transaction);
-                // Add commissions and fees
-                this.totalCommission += currentTransaction.commissions;
-                this.totalFees = addDecimal(this.totalFees, currentTransaction.fees);
+        transactions.forEach((transaction: Transaction, index) => {
+            const currentTransaction = new TransactionDTO(transaction);
+            this.totalCommission += currentTransaction.commissions;
+            this.totalFees = addDecimal(this.totalFees, currentTransaction.fees);
+            if (transaction['Type'] === 'Trade'
+                || transaction['Type'] === 'Receive Deliver') {
                 if (queue.length === 0) {
                     queue.push(currentTransaction);
                 } else if (shouldBeOneTrade(currentTransaction.date, lastTransaction.date)) {
@@ -51,11 +57,19 @@ export class Portfolio {
                     } else if (adjustmentTrade(queue)) {
                         const transactions = parseLegs(queue);
                         this.adjustTrade(currentTrade, transactions);
+                    } else if (handleExerciesOrAssignment(queue)) {
+                        const transactions = parseLegs(queue);
+                        this.handleExerciesOrAssignment(currentTrade, transactions);
+                    } else {
+                        console.log('MISSING A CASE!');
                     }
-                    // need a default case
                     queue = [currentTransaction];
                 }
                 lastTransaction = currentTransaction;
+            } else {
+                console.log('SOMETHING WENT WRONG');
+                console.log(transaction);
+            }
         });
 
         // we have to account for the last trade
@@ -86,18 +100,22 @@ export class Portfolio {
     // Close an existing trade
     closeTrade = (trade: Trade, transactions: transactionsMap) => {
         const ticker: string = trade.ticker;
-        const _trades: Trade[] = Object.keys(this.trades).filter((key) => {
-            return this.trades[key].ticker === ticker
-                && this.trades[key].status === 'open';
-        }).map((key) => {
-            return this.trades[key];
+        const _trades: string[] = Object.keys(this.trades).filter((key) => {
+            return (this.trades[key].ticker === ticker
+                && this.trades[key].status === 'open');
         });
-        for (let _trade of _trades) {
-            _trade.closeLegs(trade.legs, transactions);
-            if (_trade.status === 'closed') {
-                this.logTrade(_trade);
+        // console.log('ids: ', _trades);
+        for (let id of _trades) {
+            this.trades[id].closeLegs(trade.legs, transactions);
+            if (this.trades[id].status === 'closed') {
+                this.logTrade(this.trades[id]);
             }
         }
+    }
+
+    handleExerciesOrAssignment = (trade: Trade, transactions: transactionsMap) => {
+        // trade.setMaxLoss();
+        this.closeTrade(trade, transactions);
     }
 
     logTrade = (trade: Trade) => {
@@ -113,12 +131,14 @@ export class Portfolio {
     // Adjust an existing trade
     adjustTrade = (trade: Trade, transactions: transactionsMap) => {
         const ticker: string = trade.ticker;
-        const _trades: Trade[] = Object.keys(this.trades).filter((key) => {
-            return this.trades[key].ticker === ticker;
-        }).map((key) => {
-            return this.trades[key];
+        const _trades: string[] = Object.keys(this.trades).filter((key) => {
+            return this.trades[key].ticker === ticker 
+                && this.trades[key].status === 'open';
         });
-        _trades[0].closeLegs(trade.legs, transactions);
-        _trades[0].roll(trade.legs, transactions);
+
+        for (let id of _trades) {
+            this.trades[id].closeLegs(trade.legs, transactions);
+            this.trades[id].roll(trade.legs, transactions);
+        }
     }
 }

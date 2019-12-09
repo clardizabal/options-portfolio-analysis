@@ -6,3 +6,4 @@ export * from "./TransactionDTO";
 export * from "./transaction-utils";
 export * from "./Option";
 export * from "./transaction";
+export * from "./main";
