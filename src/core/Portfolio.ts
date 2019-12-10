@@ -30,7 +30,8 @@ export class Portfolio {
     tradeHistory: TradeLog[] = [];
     totalFees: number = 0;
     totalCommission: number = 0;
-
+    amountDeposited: number = 0;
+    feeAdjustments: number = 0;
     constructor() {
     }
 
@@ -41,7 +42,14 @@ export class Portfolio {
             const currentTransaction = new TransactionDTO(transaction);
             this.totalCommission += currentTransaction.commissions;
             this.totalFees = addDecimal(this.totalFees, currentTransaction.fees);
-            if (transaction['Type'] === 'Trade'
+            if (transaction['Type'] === 'Money Movement') {
+                const description = transaction['Description'];
+                if (description.match('ACH DEPOSIT') !== null) {
+                    this.amountDeposited = addDecimal(this.amountDeposited, currentTransaction.value);
+                } else {
+                    this.feeAdjustments = addDecimal(this.feeAdjustments, currentTransaction.value);
+                }
+            } else if (transaction['Type'] === 'Trade'
                 || transaction['Type'] === 'Receive Deliver') {
                 if (queue.length === 0) {
                     queue.push(currentTransaction);
@@ -139,6 +147,17 @@ export class Portfolio {
         for (let id of _trades) {
             this.trades[id].closeLegs(trade.legs, transactions);
             this.trades[id].roll(trade.legs, transactions);
+        }
+    }
+
+    getPortfolioValues = () => {
+        return {
+            feeAdjustments: this.feeAdjustments,
+            profit: this.profit,
+            amountDeposited: this.amountDeposited,
+            numberOfTrades: this.numberOfTrades,
+            totalFees: this.totalFees,
+            totalCommission: this.totalCommission,
         }
     }
 }
