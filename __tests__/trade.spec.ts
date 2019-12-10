@@ -1,5 +1,4 @@
 import { Trade, CallOrPut, InstrumentType, Action, TransactionType } from "../src";
-
 describe('Trade', () => {
     const genericTransaction = {
         instrumentType: 'Equity Option' as InstrumentType,

@@ -17,6 +17,8 @@ export class Trade {
     ticker: string = '';
     value: number = 0;
     legs: optionsMap = {};
+    originalPosition: optionsMap = {};
+    originalCreditReceived = 0;
     strategy: Strategies = 'NAKED';
     type: 'debit' | 'credit' = 'debit';
     profitLoss: number = 0;
@@ -47,6 +49,9 @@ export class Trade {
             }
             return sum;
         }, this.legs);
+        this.originalPosition = {
+            ...this.legs
+        }
     }
     closeLegs = (legs: optionsMap, transactions: transactionsMap) => {
         const legsToClose = optionsToClose(transactions);
@@ -104,6 +109,10 @@ export class Trade {
         this.value = value;
     }
 
+    getRealizedProfitLoss = () => {
+        return this.profitLoss + this.fees + this.commissions;
+    }
+
     private exerciseOrAssignment = (transactions: transactionsMap): TransactionDTO[] => {
         return Object.keys(transactions).filter((key) => {
             return transactions[key].expirationDate === '';
@@ -127,9 +136,19 @@ export class Trade {
             const isVertical = legs[0].callOrPut === legs[1].callOrPut;
             const isSameQuantity = legs[0].quantity === legs[1].quantity;
             if (isVertical && isSameQuantity) {
-                this.strategy = 'VERTICAL_SPREAD';
+                if (legs[0].expirationDate === legs[1].expirationDate) {
+                    this.strategy = 'VERTICAL_SPREAD';
+                } else if (legs[0].strike === legs[1].strike) {
+                    this.strategy = 'CALENDAR';
+                } else {
+                    this.strategy = 'DIAGONAL';
+                }
             } else if (this.type === 'credit' && !isVertical) {
-                this.strategy = 'STRANGLE';
+                if (legs[0].strike === legs[1].strike) {
+                    this.strategy = 'STRADDLE';
+                } else {
+                    this.strategy = 'STRANGLE';
+                }
             } else {
                 this.strategy = 'CUSTOM';
             }
@@ -150,6 +169,7 @@ export class Trade {
         this.value = legs.reduce((sum, transaction) => {
             return sum + transaction.value;
         }, 0);
+        this.originalCreditReceived = this.value;
     }
 
     private setCommissionAndFees = (legs: TransactionDTO[]) => {

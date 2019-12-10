@@ -61,5 +61,9 @@ describe('Read local csv file', () => {
 
     test('integration - portfolio summary', () => {
         console.log(portfolio.getPortfolioValues());
-    })
+    });
+
+    test('integration - get trades by strategy', () => {
+        console.log(portfolio.getTradesByStrategy('STRANGLE'));
+    });
 });
