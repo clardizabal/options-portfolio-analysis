@@ -110,7 +110,7 @@ export class Trade {
     }
 
     getRealizedProfitLoss = () => {
-        return this.profitLoss + this.fees + this.commissions;
+        return addDecimal(this.profitLoss, addDecimal(this.fees, this.commissions));
     }
 
     private exerciseOrAssignment = (transactions: transactionsMap): TransactionDTO[] => {

@@ -58,12 +58,4 @@ describe('Read local csv file', () => {
     test('integration - calculate fee adjustments', () => {
         expect(portfolio.feeAdjustments).toBe(-0.9);
     });
-
-    test('integration - portfolio summary', () => {
-        console.log(portfolio.getPortfolioValues());
-    });
-
-    test('integration - get trades by strategy', () => {
-        console.log(portfolio.getTradesByStrategy('STRANGLE'));
-    });
 });

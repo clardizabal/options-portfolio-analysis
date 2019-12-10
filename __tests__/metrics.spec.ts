@@ -94,7 +94,8 @@ describe('Metrics', () => {
         expect(portfolio.getPercentWinnersByStrategy('STRANGLE')).toBe(0.88);
         expect(portfolio.getPercentWinnersByStrategy('IRON_CONDOR')).toBe(0.71);
         expect(portfolio.getPercentWinnersByStrategy('VERTICAL_SPREAD')).toBe(0.67);
-        // console.log(portfolio.getTradesByStrategy('STRANGLE'));
+        // console.log(portfolio.getTradesByStrategy('NAKED'));
+        expect(portfolio.getPercentWinnersByStrategy('NAKED')).toBe(1.00);
         // console.log(portfolio.getTradesByStrategy('STRANGLE').length);
         expect(portfolio.getPercentWinnersByStrategy('VERTICAL_SPREAD', 'debit')).toBe(1.00);
         expect(portfolio.getPercentWinnersByStrategy('CUSTOM')).toBe(0.80);
@@ -102,6 +103,24 @@ describe('Metrics', () => {
 
     test('integration - EXT metrics', () => {
         // console.log(portfolio.getPercentProfitTakenFromExtByStrategy('STRANGLE'));
-        expect(portfolio.getPercentProfitTakenFromExtByStrategy('STRANGLE')).toBe(0.38)
+        expect(portfolio.getPercentProfitTakenFromExtByStrategy('STRANGLE')).toBe(0.38);
+        // console.log(portfolio.trades);
+        // console.log(portfolio.tradeHistory);
+        // console.log(portfolio.tradeHistory.filter((trade) => trade.ticker === 'EEM'));
+        console.log(portfolio.getAllTickers());
+    });
+
+    test('integration - get metrics by trade', () => {
+        const tickers = portfolio.getAllTickers();
+        const tradeIdsByTicker = portfolio.getTradeIdsByTicker();
+        // const tradeHistoryByTicker = portfolio.getTradesHistoryByTicker();
+        console.log(portfolio.getMetricsByTicker());
+        // const groupedByTicker = tickers.map((ticker) => {
+        //     const tradeIds = tradeIdsByTicker[ticker];
+        //     return tradeIds.map((id) => {
+        //         return portfolio.trades[id];
+        //     });
+        // });
+        // console.log(groupedByTicker);
     })
 });

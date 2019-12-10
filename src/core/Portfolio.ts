@@ -1,4 +1,3 @@
-import { uuid } from 'uuidv4';
 import { addDecimal,
     adjustmentTrade,
     Trade,
@@ -20,6 +19,7 @@ export interface TradeLog {
     ticker: string;
     profitLoss: number;
     strategy: Strategies;
+    id: string;
 }
 export class Portfolio {
     profit: number = 0;
@@ -101,7 +101,7 @@ export class Portfolio {
 
     // Add a new trade to trade history and open positions
     addTrade = (trade: Trade) => {
-        this.trades[uuid()] = trade;
+        this.trades[trade.id] = trade;
         this.numberOfTrades++;
     }
     
@@ -131,6 +131,7 @@ export class Portfolio {
             ticker: trade.ticker,
             profitLoss: trade.value,
             strategy: trade.strategy,
+            id: trade.id,
         }
         this.tradeHistory.push(tradeLog);
         this.profit += trade.value;
@@ -209,5 +210,66 @@ export class Portfolio {
             return addDecimal(sum, trade.originalCreditReceived);
         }, 0);
         return Number((totalProfit / totalExt).toFixed(2));
+    }
+
+    getTradesGroupedByTicker = () => {
+        return this.tradeHistory.reduce((_tickers, trade) => {
+            if (_tickers.hasOwnProperty(trade.ticker)) {
+                _tickers[trade.ticker].push(this.trades[trade.id]);
+            } else {
+                _tickers[trade.ticker] = [this.trades[trade.id]];
+            }
+            return _tickers;
+        }, {} as any);
+    }
+
+    getMetricsByTicker = () => {
+        const tradesGroupedByTicker = this.getTradesGroupedByTicker();
+        console.log(tradesGroupedByTicker);
+        this.getAllTickers().forEach((ticker) => {
+            tradesGroupedByTicker[ticker] = tradesGroupedByTicker[ticker].reduce((sum: any, trade: Trade) => {
+                if (sum.hasOwnProperty('profitLoss')) {
+                    sum['profitLoss'] = addDecimal(sum['profitLoss'], trade.profitLoss);
+                    sum['rpl'] = addDecimal(sum['rpl'], trade.getRealizedProfitLoss());
+                    sum['% of fees and commisions'] =
+                        sum['profitLoss'] > 0 ?
+                        Number((Math.abs(sum['rpl'] - sum['profitLoss']) / Math.abs(sum['profitLoss'])).toFixed(2)) : 0;
+                } else {
+                    sum['profitLoss'] = trade.profitLoss;
+                    sum['rpl'] = trade.getRealizedProfitLoss();
+                    sum['% of fees and commisions'] =
+                        sum['profitLoss'] > 0 ? 
+                        Number((Math.abs(sum['rpl'] - sum['profitLoss']) / Math.abs(sum['profitLoss'])).toFixed(2)) : 0;
+                }
+                return sum;
+            }, {} as any);
+        });
+        return tradesGroupedByTicker;
+    }
+
+    getTradeIdsByTicker = () => {
+        return this.tradeHistory.reduce((_tickers, trade) => {
+            if (_tickers.hasOwnProperty(trade.ticker)) {
+                _tickers[trade.ticker].push(trade.id);
+            } else {
+                _tickers[trade.ticker] = [trade.id];
+            }
+            return _tickers;
+        }, {} as any);
+    }
+
+    getAllTickers = () => {
+        return Object.keys(this.getTradeIdsByTicker());
+    }
+
+    getTradesHistoryByTicker = () => {
+        return this.tradeHistory.reduce((_tickers, trade) => {
+            if (_tickers.hasOwnProperty(trade.ticker)) {
+                _tickers[trade.ticker].push(trade);
+            } else {
+                _tickers[trade.ticker] = [trade];
+            }
+            return _tickers;
+        }, {} as any);
     }
 }
