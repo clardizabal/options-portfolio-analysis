@@ -10,6 +10,17 @@ export type Strategies = 'BUTTERFLY'
     | 'CALENDAR'
     | 'DIAGONAL'
     | 'EXERCISE_OR_ASSIGNMENT';
+export const strategyStrings = [
+    'BUTTERFLY',
+    'STRANGLE',
+    'STRADDLE',
+    'IRON_CONDOR',
+    'VERTICAL_SPREAD',
+    'NAKED',
+    'CUSTOM',
+    'CALENDAR',
+    'DIAGONAL',
+];
 export type InstrumentType = 'Equity Option';
 export type CallOrPut = 'CALL' | 'PUT';
 export type tradeStatus = 'open'

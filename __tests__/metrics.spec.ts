@@ -19,9 +19,25 @@ describe('Metrics', () => {
         const strangleTrades = portfolio.getTradesByStrategy('STRANGLE');
         strangleTrades.forEach((trade) => {
             expect(trade.strategy).toBe('STRANGLE');
+        });
+        const tradeSummary = strangleTrades.map((trade) => portfolio.toTradeSummary(trade));
+        // console.log(tradeSummary);
+        expect(tradeSummary.length).toBe(17);
+        tradeSummary.forEach((trade) => {
+            expect(trade.strategy).toBe('STRANGLE');
         })
         expect(strangleTrades.length).toBe(17);
+        console.log(portfolio.getTradesByStrategy('IRON_CONDOR'));
     });
+
+    test('integration - get trades by ticker', () => {
+        const tradeSummary = portfolio.getTradesByTicker('SPY').map((trade) => portfolio.toTradeSummary(trade));
+        expect(tradeSummary.length).toBe(3);
+        tradeSummary.forEach((trade) => {
+            expect(trade.ticker).toBe('SPY');
+        })
+        // console.log(tradeSummary);
+    })
 
     test('integration - get P&L from strangles', () => {
         const profitLoss = portfolio.getProfitLossByStrategy('STRANGLE');
@@ -33,7 +49,7 @@ describe('Metrics', () => {
         expect(avgProfitLoss).toBe(47.94);
 
         avgProfitLoss = portfolio.getAverageProfitLossByStrategy('IRON_CONDOR');
-        expect(avgProfitLoss).toBe(0.29);
+        expect(avgProfitLoss).toBe(-17.35);
 
         avgProfitLoss = portfolio.getAverageProfitLossByStrategy('VERTICAL_SPREAD', null);
         expect(avgProfitLoss).toBe(-1.9);
@@ -74,9 +90,6 @@ describe('Metrics', () => {
 
         avgProfitLoss = portfolio.getAverageRealizedProfitLossByStrategy('CUSTOM');
         expect(avgProfitLoss).toBe(6.17);
-
-
-        // console.log(portfolio.getTradesByTicker('SPY'));
     });
 
     test('integration - get average realized P&L of credit/debit spreads', () => {
@@ -102,25 +115,27 @@ describe('Metrics', () => {
     });
 
     test('integration - EXT metrics', () => {
-        // console.log(portfolio.getPercentProfitTakenFromExtByStrategy('STRANGLE'));
         expect(portfolio.getPercentProfitTakenFromExtByStrategy('STRANGLE')).toBe(0.38);
-        // console.log(portfolio.trades);
-        // console.log(portfolio.tradeHistory);
-        // console.log(portfolio.tradeHistory.filter((trade) => trade.ticker === 'EEM'));
-        console.log(portfolio.getAllTickers());
+        // console.log(portfolio.getAllTickers());
     });
 
     test('integration - get metrics by trade', () => {
-        const tickers = portfolio.getAllTickers();
-        const tradeIdsByTicker = portfolio.getTradeIdsByTicker();
-        // const tradeHistoryByTicker = portfolio.getTradesHistoryByTicker();
-        console.log(portfolio.getMetricsByTicker());
-        // const groupedByTicker = tickers.map((ticker) => {
-        //     const tradeIds = tradeIdsByTicker[ticker];
-        //     return tradeIds.map((id) => {
-        //         return portfolio.trades[id];
-        //     });
-        // });
-        // console.log(groupedByTicker);
-    })
+        // const tickers = portfolio.getAllTickers();
+        // const tradeIdsByTicker = portfolio.getTradeIdsByTicker();
+        const metricsByTicker = portfolio.getMetricsByTicker();
+        const grossProfit = Object.keys(metricsByTicker).reduce((sum, ticker) => {
+            return sum + metricsByTicker[ticker].grossProfit;
+        }, 0);
+        expect(grossProfit).toBe(portfolio.profit);
+    });
+
+    test('integration - get metrics by strategy', () => {
+        const metricsByStrategy = portfolio.getMetricsByStrategy();
+        // console.log(metricsByStrategy);
+
+        const grossProfit = Object.keys(metricsByStrategy).reduce((sum, ticker) => {
+            return sum + metricsByStrategy[ticker].grossProfit;
+        }, 0);
+        expect(grossProfit).toBe(portfolio.profit);
+    });
 });

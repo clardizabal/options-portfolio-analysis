@@ -5,7 +5,7 @@ import { addDecimal,
     TransactionDTO,
     openingTrade, closingTrade, parseLegs, handleExerciesOrAssignment,
 } from '../index';
-import { Strategies } from './types';
+import { Strategies, strategyStrings } from './types';
 
 export const shouldBeOneTrade = (dateOne: string, dateTwo: string) => {
     const tradeDateOne = new Date(dateOne);
@@ -21,9 +21,33 @@ export interface TradeLog {
     strategy: Strategies;
     id: string;
 }
+
+export interface OverviewMetrics {
+    numberOfTransactions: number,
+    numberOfTrades: number,
+    feeAdjustments: number,
+    grossProfit: number,
+    netProfit: number,
+    feesAndCommissionPercentageOfProfit: number,
+    commissionPercentageOfProfit: number,
+    feesPercentageOfProfit: number,
+    amountDeposited: number,
+    totalFees: number,
+    totalCommission: number,
+    totalExt: number,
+    returnPercentageOfExt: number,
+    winningPercentage: number
+}
+
+export interface MetricsWithAverages extends OverviewMetrics {
+    averageGrossProfit: number;
+    averageNetProfit: number;
+}
+
 export class Portfolio {
     profit: number = 0;
     numberOfTrades: number = 0;
+    numberOfTransactions: number = 0;
     tradesOpen: number = 0;
     tradesClosed: number = 0;
     trades: {[key: string] : Trade} = {};
@@ -74,6 +98,9 @@ export class Portfolio {
                     queue = [currentTransaction];
                 }
                 lastTransaction = currentTransaction;
+                if (transaction['Type'] === 'Trade') {
+                    this.numberOfTransactions++;
+                }
             } else {
                 console.log('SOMETHING WENT WRONG');
                 console.log(transaction);
@@ -150,19 +177,31 @@ export class Portfolio {
             this.trades[id].roll(trade.legs, transactions);
         }
     }
+    
 
-    getPortfolioValues = () => {
+    getPortfolioValues = (): OverviewMetrics => {
+        const totalExt = this.getTotalExt();
+        const totalFeesAndCommissions = this.totalFees + this.totalCommission;
+        const numberOfWinningTrades = this.tradeHistory.filter((trade) => trade.profitLoss > 0).length;
         return {
-            feeAdjustments: this.feeAdjustments,
-            profit: this.profit,
-            amountDeposited: this.amountDeposited,
+            numberOfTransactions: this.numberOfTransactions,
             numberOfTrades: this.numberOfTrades,
+            feeAdjustments: this.feeAdjustments,
+            grossProfit: this.profit,
+            netProfit: this.profit + this.feeAdjustments + totalFeesAndCommissions,
+            feesAndCommissionPercentageOfProfit: Math.abs(totalFeesAndCommissions) / this.profit,
+            commissionPercentageOfProfit: Math.abs(this.totalCommission) / this.profit,
+            feesPercentageOfProfit: Math.abs(this.totalFees) / this.profit,
+            amountDeposited: this.amountDeposited,
             totalFees: this.totalFees,
             totalCommission: this.totalCommission,
+            totalExt,
+            returnPercentageOfExt: this.profit / totalExt,
+            winningPercentage: numberOfWinningTrades / this.numberOfTrades,
         }
     }
 
-    getTradesByStrategy(strategy: Strategies, type: 'credit' | 'debit'  | null = 'credit'): Trade[] {
+    getTradesByStrategy = (strategy: Strategies, type: 'credit' | 'debit'  | null = 'credit'): any[] => {
         return Object.keys(this.trades).filter((id) => {
             if (type !== null) {
                 return this.trades[id].strategy === strategy
@@ -175,9 +214,22 @@ export class Portfolio {
         }).map((id) => this.trades[id]);
     }
 
+    toTradeSummary = (trade: Trade) => {
+        return {
+            ticker: trade.ticker,
+            strategy: trade.strategy,
+            value: trade.value,
+            grossProfit: trade.value,
+            netProfit: trade.getRealizedProfitLoss(),
+            dateOpened: trade.date,
+            // dateClosed: trade.dateClosed,
+            ext: trade.originalCreditReceived,
+        };
+    }
+
     getProfitLossByStrategy = (strategy: Strategies, type: 'credit' | 'debit' = 'credit') => {
         return this.getTradesByStrategy(strategy, type).reduce((sum, trade) => {
-            return sum = addDecimal(sum, trade.profitLoss);
+            return sum = addDecimal(sum, trade.value);
         }, 0);
     }
 
@@ -204,6 +256,19 @@ export class Portfolio {
         return Number((numberOfWinningTrades / numberOfTrades).toFixed(2));
     }
 
+    getTotalExt = () => {
+        return Object.keys(this.trades).reduce((sum, tradeId) => {
+            const trade = this.trades[tradeId];
+            return addDecimal(sum, trade.originalCreditReceived);
+        }, 0);
+    }
+
+    getTotalExtOfTrades = (trades: Trade[]) => {
+        return trades.reduce((sum, trade) => {
+            return addDecimal(sum, trade.originalCreditReceived);
+        }, 0)
+    }
+
     getPercentProfitTakenFromExtByStrategy = (strategy: Strategies, type: 'credit' | 'debit' = 'credit') => {
         const totalProfit = this.getProfitLossByStrategy(strategy, type);
         const totalExt = this.getTradesByStrategy(strategy, type).reduce((sum, trade) => {
@@ -212,7 +277,8 @@ export class Portfolio {
         return Number((totalProfit / totalExt).toFixed(2));
     }
 
-    getTradesGroupedByTicker = () => {
+    getTradesGroupedByTicker = (): {[key: string] : any} => {
+        // console.log(this.tradeHistory);
         return this.tradeHistory.reduce((_tickers, trade) => {
             if (_tickers.hasOwnProperty(trade.ticker)) {
                 _tickers[trade.ticker].push(this.trades[trade.id]);
@@ -223,29 +289,111 @@ export class Portfolio {
         }, {} as any);
     }
 
-    getMetricsByTicker = () => {
-        const tradesGroupedByTicker = this.getTradesGroupedByTicker();
-        console.log(tradesGroupedByTicker);
-        this.getAllTickers().forEach((ticker) => {
-            tradesGroupedByTicker[ticker] = tradesGroupedByTicker[ticker].reduce((sum: any, trade: Trade) => {
-                if (sum.hasOwnProperty('profitLoss')) {
-                    sum['profitLoss'] = addDecimal(sum['profitLoss'], trade.profitLoss);
-                    sum['rpl'] = addDecimal(sum['rpl'], trade.getRealizedProfitLoss());
-                    sum['% of fees and commisions'] =
-                        sum['profitLoss'] > 0 ?
-                        Number((Math.abs(sum['rpl'] - sum['profitLoss']) / Math.abs(sum['profitLoss'])).toFixed(2)) : 0;
-                } else {
-                    sum['profitLoss'] = trade.profitLoss;
-                    sum['rpl'] = trade.getRealizedProfitLoss();
-                    sum['% of fees and commisions'] =
-                        sum['profitLoss'] > 0 ? 
-                        Number((Math.abs(sum['rpl'] - sum['profitLoss']) / Math.abs(sum['profitLoss'])).toFixed(2)) : 0;
-                }
+    getTradesGroupedByStrategy = () => {
+        return this.tradeHistory.reduce((_strategies, trade) => {
+            if (_strategies[trade.strategy]) {
+                _strategies[trade.strategy].push(this.trades[trade.id]);
+            } else {
+                _strategies[trade.strategy] = [this.trades[trade.id]];
+            }
+            return _strategies;
+        }, {} as any)
+    }
+
+    getMetricsByStrategy = (): {[key: string]: MetricsWithAverages} => {
+        const tradesGroupedByStrategy = this.getTradesGroupedByStrategy();
+        Object.keys(tradesGroupedByStrategy).forEach((strategy) => {
+            const initialOutput: MetricsWithAverages = {
+                numberOfTransactions: 0,
+                numberOfTrades: 0,
+                feeAdjustments: 0,
+                grossProfit: 0,
+                netProfit: 0,
+                feesAndCommissionPercentageOfProfit: 0,
+                commissionPercentageOfProfit: 0,
+                feesPercentageOfProfit: 0,
+                amountDeposited: 0,
+                totalFees: 0,
+                totalCommission: 0,
+                totalExt: 0,
+                returnPercentageOfExt: 0,
+                winningPercentage: this.getPercentWinnersByStrategy(strategy as Strategies),
+                averageGrossProfit: 0,
+                averageNetProfit: 0,
+            }
+            tradesGroupedByStrategy[strategy] = tradesGroupedByStrategy[strategy].reduce((sum: any, trade: Trade) => {
+                // TODO: value is correct but profitLoss is incorrect for some trades because trade does not calculate expiration/assignments
+                sum.grossProfit = addDecimal(sum.grossProfit, trade.value);
+                sum.netProfit = addDecimal(sum.netProfit, trade.getRealizedProfitLoss());
+                sum.feesAndCommissionPercentageOfProfit = sum.netProfit > 0 ?
+                    Number((Math.abs(sum.netProfit - sum.grossProfit) / Math.abs(sum.grossProfit)).toFixed(2)) : 0;
+                sum.numberOfTrades++;
+                // sum.numberOfTransactions TODO: need to get total transaction for a trade
+                // TODO: keep track of transactions per trade
+                sum.totalFees = addDecimal(sum.totalFees, trade.fees);
+                sum.totalCommission = addDecimal(sum.totalCommission, trade.commissions);
+                sum.commissionPercentageOfProfit = Math.abs(sum.totalCommission) / sum.grossProfit;
+                sum.feesPercentageOfProfit = Math.abs(sum.totalFees) / sum.grossProfit;
+                sum.totalExt = addDecimal(sum.totalExt, trade.originalCreditReceived); // TODO: include rolls
+                sum.returnPercentageOfExt = sum.grossProfit / sum.totalExt;
+                sum.averageGrossProfit = sum.grossProfit / sum.numberOfTrades;
+                sum.averageNetProfit = sum.netProfit / sum.numberOfTrades;
                 return sum;
-            }, {} as any);
+            }, initialOutput);
+        });
+
+        return tradesGroupedByStrategy;
+    }
+
+    getMetricsByTicker = (): {[key: string]: MetricsWithAverages} => {
+        const tradesGroupedByTicker = this.getTradesGroupedByTicker();
+        
+        this.getAllTickers().forEach((ticker) => {
+            const initialOutput: MetricsWithAverages = {
+                numberOfTransactions: 0,
+                numberOfTrades: 0,
+                feeAdjustments: 0,
+                grossProfit: 0,
+                netProfit: 0,
+                feesAndCommissionPercentageOfProfit: 0,
+                commissionPercentageOfProfit: 0,
+                feesPercentageOfProfit: 0,
+                amountDeposited: 0,
+                totalFees: 0,
+                totalCommission: 0,
+                totalExt: 0,
+                returnPercentageOfExt: 0,
+                winningPercentage: 0,
+                averageNetProfit: 0,
+                averageGrossProfit: 0,
+            }
+
+            tradesGroupedByTicker[ticker] = tradesGroupedByTicker[ticker].reduce((sum: any, trade: Trade) => {
+                // TODO: value is correct but profitLoss is incorrect for some trades because trade does not calculate expiration/assignments
+                sum.grossProfit = addDecimal(sum.grossProfit, trade.value);
+                sum.netProfit = addDecimal(sum.netProfit, trade.getRealizedProfitLoss());
+                sum.feesAndCommissionPercentageOfProfit = sum.netProfit > 0 ?
+                    Number((Math.abs(sum.netProfit - sum.grossProfit) / Math.abs(sum.grossProfit)).toFixed(2)) : 0;
+                sum.numberOfTrades++;
+                // sum.numberOfTransactions TODO: need to get total transaction for a trade
+                // TODO: keep track of transactions per trade
+                sum.totalFees = addDecimal(sum.totalFees, trade.fees);
+                sum.totalCommission = addDecimal(sum.totalCommission, trade.commissions);
+                sum.commissionPercentageOfProfit = Math.abs(sum.totalCommission) / sum.grossProfit;
+                sum.feesPercentageOfProfit = Math.abs(sum.totalFees) / sum.grossProfit;
+                sum.totalExt = addDecimal(sum.totalExt, trade.originalCreditReceived); // TODO: include rolls
+                sum.returnPercentageOfExt = sum.grossProfit / sum.totalExt;
+                sum.returnPercentageOfExt = sum.grossProfit / sum.totalExt;
+                sum.averageGrossProfit = sum.grossProfit / sum.numberOfTrades;
+                sum.averageNetProfit = sum.netProfit / sum.numberOfTrades;
+                return sum;
+            }, initialOutput as MetricsWithAverages);
         });
         return tradesGroupedByTicker;
     }
+    // private tradeToOverviewMetrics = (trade: Trade): OverviewMetrics => {
+
+    // }
 
     getTradeIdsByTicker = () => {
         return this.tradeHistory.reduce((_tickers, trade) => {
