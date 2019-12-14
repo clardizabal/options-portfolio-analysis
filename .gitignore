@@ -2,3 +2,5 @@
 /lib
 /coverage
 .env
+/temp
+/uploads

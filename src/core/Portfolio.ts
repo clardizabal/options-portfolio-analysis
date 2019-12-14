@@ -4,8 +4,8 @@ import { addDecimal,
     Transaction,
     TransactionDTO,
     openingTrade, closingTrade, parseLegs, handleExerciesOrAssignment,
+    Strategies
 } from '../index';
-import { Strategies, strategyStrings } from './types';
 
 export const shouldBeOneTrade = (dateOne: string, dateTwo: string) => {
     const tradeDateOne = new Date(dateOne);
@@ -15,6 +15,8 @@ export const shouldBeOneTrade = (dateOne: string, dateTwo: string) => {
 }
 
 export type transactionsMap = {[key: string] : TransactionDTO};
+export type tradeType = 'credit' | 'debit' | null;
+
 export interface TradeLog {
     ticker: string;
     profitLoss: number;
@@ -227,29 +229,29 @@ export class Portfolio {
         };
     }
 
-    getProfitLossByStrategy = (strategy: Strategies, type: 'credit' | 'debit' = 'credit') => {
+    getProfitLossByStrategy = (strategy: Strategies, type: tradeType = 'credit') => {
         return this.getTradesByStrategy(strategy, type).reduce((sum, trade) => {
             return sum = addDecimal(sum, trade.value);
         }, 0);
     }
 
-    getRealizedProfitLossByStrategy = (strategy: Strategies, type: 'credit' | 'debit' = 'credit') => {
+    getRealizedProfitLossByStrategy = (strategy: Strategies, type: tradeType = 'credit') => {
         return this.getTradesByStrategy(strategy, type).reduce((sum, trade) => {
             return sum = addDecimal(sum, trade.getRealizedProfitLoss());
         }, 0);
     }
 
-    getAverageProfitLossByStrategy = (strategy: Strategies, type: 'credit' | 'debit' = 'credit') => {
+    getAverageProfitLossByStrategy = (strategy: Strategies, type: tradeType = 'credit') => {
         const numberOfTrades = this.getTradesByStrategy(strategy, type).length;
         return Number((this.getProfitLossByStrategy(strategy) / numberOfTrades).toFixed(2));
     }
 
-    getAverageRealizedProfitLossByStrategy = (strategy: Strategies, type: 'credit' | 'debit' = 'credit') => {
+    getAverageRealizedProfitLossByStrategy = (strategy: Strategies, type: tradeType = 'credit') => {
         const numberOfTrades = this.getTradesByStrategy(strategy, type).length;
         return Number((this.getRealizedProfitLossByStrategy(strategy) / numberOfTrades).toFixed(2));
     }
 
-    getPercentWinnersByStrategy = (strategy: Strategies, type: 'credit' | 'debit' = 'credit') => {
+    getPercentWinnersByStrategy = (strategy: Strategies, type: tradeType = 'credit') => {
         const trades = this.getTradesByStrategy(strategy, type)
         const numberOfTrades = trades.length;
         const numberOfWinningTrades = trades.filter((trade) => (trade.getRealizedProfitLoss() > 0)).length;
@@ -269,7 +271,7 @@ export class Portfolio {
         }, 0)
     }
 
-    getPercentProfitTakenFromExtByStrategy = (strategy: Strategies, type: 'credit' | 'debit' = 'credit') => {
+    getPercentProfitTakenFromExtByStrategy = (strategy: Strategies, type: tradeType = 'credit') => {
         const totalProfit = this.getProfitLossByStrategy(strategy, type);
         const totalExt = this.getTradesByStrategy(strategy, type).reduce((sum, trade) => {
             return addDecimal(sum, trade.originalCreditReceived);

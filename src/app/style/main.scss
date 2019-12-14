@@ -1,0 +1,26 @@
+body {
+    background-color: #ffffff;
+    font-family: 'Open Sans', sans-serif;
+    #app {
+        h1 {
+            font-weight: 800;
+            font-size: 40px;
+        }
+        display: flex;
+        justify-content: center;
+        .centerfold {
+            background: pink;
+            width: 800px;
+        }
+    }
+    
+    #dragOverlay {
+        position: absolute;
+        height: 100%;
+        width: 100%;
+        &.hover {
+            background: black;
+            opacity: 0.5;
+        }
+    }
+}

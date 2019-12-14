@@ -25,3 +25,22 @@ export const readLocalCsvFile = new Promise((resolve, reject) => {
             resolve(allTransactions.reverse());
         });
 });
+
+export const readUploadedCsvFile = (filename: string) => {
+    const stream = fs.createReadStream(filename).pipe(csv());
+    return new Promise((resolve, reject) => {
+        let allTransactions: Transaction[] = [];
+        stream
+            .on('data', (data: Transaction) => {
+                try {
+                    allTransactions = [...allTransactions, data];
+                }
+                catch (err) {
+                    reject(err);
+                }
+            })
+            .on('end', () => {
+                resolve(allTransactions.reverse());
+            });
+    });   
+}

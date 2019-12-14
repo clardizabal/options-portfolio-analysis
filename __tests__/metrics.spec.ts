@@ -1,4 +1,4 @@
-import { readLocalCsvFile, Transaction, Portfolio, TradeLog } from '../src';
+import { readLocalCsvFile, Transaction, Portfolio } from '../src';
 
 describe('Metrics', () => {
     let transactions: Transaction[];
