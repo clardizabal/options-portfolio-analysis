@@ -4,7 +4,7 @@ import multer from 'multer';
 export default (app: any) => {
     app.get('/', (req: any, res: any) => {
         console.log(__dirname);
-        res.sendFile(__dirname + '/index.html');
+        res.sendFile(__dirname + '/src/index.html');
       });
     app.post('/portfolio', multer({ dest: 'uploads/'}).single(
         'csv'

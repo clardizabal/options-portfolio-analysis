@@ -3,20 +3,29 @@
     <meta charset="UTF-8">
     <title>Steep Street</title>
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./app/style/main.css">
+    <link rel="stylesheet" href="/src/style/main.css">
   </head>
   <body>
     <!-- NAV -->
     <div id="app">
         <div class="centerfold">
-          <!-- <h1>Go</h1> -->
-          <!-- <div id='dragOverlay'></div> -->
-          <form enctype="multipart/form-data" action="/upload/image" method="post">
-            <input id="image-file" type="file" />
-          </form>
+          <div class="column">
+            <div class="row">
+              <div class="portfolio-title"></div>
+              <!-- <div id='dragOverlay'></div> -->
+              <form enctype="multipart/form-data" action="/upload/image" method="post">
+                <input id="image-file" type="file" />
+              </form>
+            </div>
+            <div class="row go-to">
+              <button>GO!</button>
+            </div>
+          </div>
         </div>
+        <ul class="todos"></ul>
+        <button type="button" class="unsubscribe">Unsubscribe</button>
     </div>
     <!-- FOOTER -->
-    <script type='text/javascript' src="./app/dragZone.js"></script>
+    <script type='module' src="/src/app-bundle.js"></script>
   </body>
 </html>

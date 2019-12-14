@@ -12,7 +12,7 @@
         "declaration": true /* Generates corresponding '.d.ts' file. */,
         // "sourceMap": true,                     /* Generates corresponding '.map' file. */
         // "outFile": "./",                       /* Concatenate and emit output to single file. */
-        "outDir": "./lib" /* Redirect output structure to the directory. */,
+        "outDir": "../lib/src" /* Redirect output structure to the directory. */,
         // "rootDir": "./",                       /* Specify the root directory of input files. Use to control the output directory structure with --outDir. */
         // "removeComments": true,                /* Do not emit comments to output. */
         // "noEmit": true,                        /* Do not emit outputs. */
@@ -57,5 +57,8 @@
         // "emitDecoratorMetadata": true,         /* Enables experimental support for emitting type metadata for decorators. */
         "lib": [ "es2015", "DOM" ]
     },
+    "include": [
+        "app.ts"
+    ],
     "exclude": ["node_modules", "lib"]
 }

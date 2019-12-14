@@ -1,0 +1,41 @@
+body {
+    background-color: #333333;
+    font-family: 'Open Sans', sans-serif;
+    #app {
+        // h1 {
+        //     font-weight: 800;
+        //     font-size: 40px;
+        // }
+        display: flex;
+        justify-content: center;
+        .centerfold {
+            background: pink;
+            width: 800px;
+            padding-top: 20px;
+            flex-direction: column;
+            .row {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 20px;
+                padding: 0 20px;
+                &.go-to {
+                    // display: flex;
+                    justify-content: center;
+                }
+            }
+            .column {
+
+            }
+        }
+    }
+    
+    #dragOverlay {
+        position: absolute;
+        height: 100%;
+        width: 100%;
+        &.hover {
+            background: black;
+            opacity: 0.5;
+        }
+    }
+}

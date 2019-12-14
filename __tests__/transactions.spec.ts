@@ -8,7 +8,7 @@ import {
     InstrumentType,
     TransactionType,
     addDecimal
-} from '../src';
+} from '../app';
 
 describe('Evaluate Portfolio', () => {
     const portfolio = new Portfolio();

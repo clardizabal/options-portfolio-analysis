@@ -20,14 +20,17 @@
     "typescript": "^2.7.1"
   },
   "scripts": {
-    "build-ts": "tsc",
+    "build": "npm run build:server && npm run build:web",
+    "build:web": "webpack --config ./webpack-front.config.js",
+    "build:server": "tsc -p ./app",
     "test": "jest --env=node --colors --coverage test",
-    "start": "node lib/src/app.js",
-    "start:dev": "npm run copy:html && npm run sass && npm run build-ts && npm run start",
+    "start": "node lib/app.js",
+    "start:dev": "npm run build && npm run sass && npm run copy:html && npm run start",
     "copy:html": "find src -name '*.html' -type f -exec cp {} lib/src \\;",
-    "sass": "sass src/app/style/main.scss lib/src/app/style/main.css"
+    "sass": "sass src/style/main.scss lib/src/style/main.css"
   },
   "dependencies": {
+    "awesome-typescript-loader": "^5.2.1",
     "bcrypt-nodejs": "0.0.3",
     "body-parser": "^1.18.3",
     "cors": "^2.8.5",
@@ -41,6 +44,8 @@
     "request": "^2.88.0",
     "sass": "^1.23.7",
     "sequelize": "^4.42.0",
-    "uuidv4": "^6.0.0"
+    "uuidv4": "^6.0.0",
+    "webpack": "^4.41.2",
+    "webpack-cli": "^3.3.10"
   }
 }

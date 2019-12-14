@@ -1,4 +1,4 @@
-import { Trade, CallOrPut, InstrumentType, Action, TransactionType } from "../src";
+import { Trade, CallOrPut, InstrumentType, Action, TransactionType } from "../app";
 describe('Trade', () => {
     const genericTransaction = {
         instrumentType: 'Equity Option' as InstrumentType,
