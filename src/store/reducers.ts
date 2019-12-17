@@ -4,6 +4,7 @@ export const initialState = {
   loaded: false,
   loading: false,
   data: [{ label: 'Eat pizza', complete: false }],
+  portfolio: {},
 };
 
 export function reducer(
@@ -11,23 +12,11 @@ export function reducer(
   action: { type: string; payload: any }
 ) {
   switch (action.type) {
-    case fromActions.ADD_TODO: {
-      const todo = action.payload;
-      const data = [...state.data, todo];
+    case fromActions.CREATE_PORTFOLIO: {
+      const portfolio = action.payload;
       return {
         ...state,
-        data,
-      };
-    }
-
-    case fromActions.REMOVE_TODO: {
-      const data = state.data.filter(
-        todo => todo.label !== action.payload.label
-      );
-
-      return {
-        ...state,
-        data,
+        portfolio,
       };
     }
   }

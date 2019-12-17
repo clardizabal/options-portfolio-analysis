@@ -1,5 +1,5 @@
 body {
-    background-color: #333333;
+    // background-color: #333333;
     font-family: 'Open Sans', sans-serif;
     #app {
         // h1 {
@@ -9,8 +9,10 @@ body {
         display: flex;
         justify-content: center;
         .centerfold {
+            margin: 0 auto;
+            flex-direction: column;
             background: pink;
-            width: 800px;
+            width: 1176px;
             padding-top: 20px;
             flex-direction: column;
             .row {
