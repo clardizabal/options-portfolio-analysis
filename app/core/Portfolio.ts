@@ -190,7 +190,7 @@ export class Portfolio {
             numberOfTrades: this.numberOfTrades,
             feeAdjustments: this.feeAdjustments,
             grossProfit: this.profit,
-            netProfit: this.profit + this.feeAdjustments + totalFeesAndCommissions,
+            netProfit: addDecimal(addDecimal(this.profit,this.feeAdjustments), totalFeesAndCommissions),
             feesAndCommissionPercentageOfProfit: Math.abs(totalFeesAndCommissions) / this.profit,
             commissionPercentageOfProfit: Math.abs(this.totalCommission) / this.profit,
             feesPercentageOfProfit: Math.abs(this.totalFees) / this.profit,
@@ -253,6 +253,13 @@ export class Portfolio {
 
     getPercentWinnersByStrategy = (strategy: Strategies, type: tradeType = 'credit') => {
         const trades = this.getTradesByStrategy(strategy, type)
+        const numberOfTrades = trades.length;
+        const numberOfWinningTrades = trades.filter((trade) => (trade.getRealizedProfitLoss() > 0)).length;
+        return Number((numberOfWinningTrades / numberOfTrades).toFixed(2));
+    }
+
+    getPercentWinnersByTicker = (ticker: string) => {
+        const trades = this.getTradesByTicker(ticker)
         const numberOfTrades = trades.length;
         const numberOfWinningTrades = trades.filter((trade) => (trade.getRealizedProfitLoss() > 0)).length;
         return Number((numberOfWinningTrades / numberOfTrades).toFixed(2));
@@ -338,8 +345,8 @@ export class Portfolio {
                 sum.feesPercentageOfProfit = Math.abs(sum.totalFees) / sum.grossProfit;
                 sum.totalExt = addDecimal(sum.totalExt, trade.originalCreditReceived); // TODO: include rolls
                 sum.returnPercentageOfExt = sum.grossProfit / sum.totalExt;
-                sum.averageGrossProfit = sum.grossProfit / sum.numberOfTrades;
-                sum.averageNetProfit = sum.netProfit / sum.numberOfTrades;
+                sum.averageGrossProfit = Number((sum.grossProfit / sum.numberOfTrades).toFixed(2));
+                sum.averageNetProfit = Number((sum.netProfit / sum.numberOfTrades).toFixed(2));
                 return sum;
             }, initialOutput);
         });
@@ -365,7 +372,7 @@ export class Portfolio {
                 totalCommission: 0,
                 totalExt: 0,
                 returnPercentageOfExt: 0,
-                winningPercentage: 0,
+                winningPercentage: this.getPercentWinnersByTicker(ticker),
                 averageNetProfit: 0,
                 averageGrossProfit: 0,
             }
@@ -386,8 +393,8 @@ export class Portfolio {
                 sum.totalExt = addDecimal(sum.totalExt, trade.originalCreditReceived); // TODO: include rolls
                 sum.returnPercentageOfExt = sum.grossProfit / sum.totalExt;
                 sum.returnPercentageOfExt = sum.grossProfit / sum.totalExt;
-                sum.averageGrossProfit = sum.grossProfit / sum.numberOfTrades;
-                sum.averageNetProfit = sum.netProfit / sum.numberOfTrades;
+                sum.averageGrossProfit = Number((sum.grossProfit / sum.numberOfTrades).toFixed(2));
+                sum.averageNetProfit = Number((sum.netProfit / sum.numberOfTrades).toFixed(2));
                 return sum;
             }, initialOutput as MetricsWithAverages);
         });

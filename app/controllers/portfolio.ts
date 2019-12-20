@@ -14,19 +14,20 @@ const SUCCESS_CODE = 200;
 
 const PortfolioController = {
   create: async (req: any, res: any) => {
-    // console.log(req.body);
     console.log(req.file);
     const filename = `uploads/${req.file.filename}`;
     const transactions = await readUploadedCsvFile(filename) as Transaction[];
     const portfolio = new Portfolio();
     portfolio.parseTransactions(transactions);
     const summary = portfolio.getPortfolioValues();
+    const tickers = portfolio.getMetricsByTicker();
+    const strategies = portfolio.getMetricsByStrategy();
     
     return res.status(SUCCESS_CODE).send({
-      success: true,
-      message: 'hello world!',
       summary,
-    })
+      tickers,
+      strategies,
+    });
   },
 }
 

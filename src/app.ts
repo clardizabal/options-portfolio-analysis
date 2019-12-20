@@ -1,5 +1,5 @@
 import * as fromStore from './store';
-import { renderPortfolio } from './utils';
+import { renderPortfolioSummary, renderTickers, renderStrategies } from './utils';
 
 const button = document.querySelector('button') as HTMLButtonElement;
 const reducers = {
@@ -18,7 +18,7 @@ button.addEventListener('click', async () => {
                 body: data
             });
             const body = await res.json();
-            store.dispatch(new fromStore.CreatePortfolio(body.summary));
+            store.dispatch(new fromStore.CreatePortfolio(body));
         } catch(error) {
             console.error(error);
         }
@@ -26,7 +26,22 @@ button.addEventListener('click', async () => {
 }, false);
 
 store.subscribe((state: any) => {
-    renderPortfolio(state.todos.portfolio);
+    console.log(state.todos.portfolio);
+    const hasSummary = state.todos.portfolio.hasOwnProperty('summary');
+    if (hasSummary) {
+        const summary = state.todos.portfolio.summary
+        renderPortfolioSummary(summary);
+    }
+    const hasTickers = state.todos.portfolio.hasOwnProperty('tickers');
+    if (hasTickers) {
+        const tickers = state.todos.portfolio.tickers;
+        renderTickers(tickers);
+    }
+    const hasStrategies = state.todos.portfolio.hasOwnProperty('strategies');
+    if (hasStrategies) {
+        const strategies = state.todos.portfolio.strategies;
+        renderStrategies(strategies);
+    }
 });
 
 const dropZone = document.getElementById('app');
@@ -70,7 +85,7 @@ if (dropZone) {
                     });
                     const body = await res.json();
                     console.log(body);
-                    store.dispatch(new fromStore.CreatePortfolio(body.summary));
+                    store.dispatch(new fromStore.CreatePortfolio(body));
                 } catch(error) {
                     console.error(error);
                 }
