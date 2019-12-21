@@ -143,6 +143,7 @@ export const renderTrades = (collection: Trade[]) => {
         <td>${(new Date(trade.date)).toLocaleString()}</td>
         <td>${(new Date(trade.closeDate as string)).toLocaleString()}</td>
         <td>${trade.daysToExpiration - trade.daysTradeOpen >= 21 ? 'Yes' : 'No'}</td>
+        <td>${trade.rolls}</td>
       </tr>
     `);
   });
@@ -157,6 +158,7 @@ export const renderTrades = (collection: Trade[]) => {
         <th>Date Opened</th>
         <th>Date Closed</th>
         <th>Closed Before 21DTE</th>
+        <th>Rolls</th>
       </tr>
       ${rows}
     </table>

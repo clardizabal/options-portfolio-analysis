@@ -29,6 +29,7 @@ export class Trade {
     closeDate: string | null = null;
     daysTradeOpen: number = 0;
     daysToExpiration: number;
+    rolls: number = 0;
 
     constructor(legs: TransactionDTO[]) {
         this.ticker = legs.reduce((ticker, leg) => {
@@ -85,6 +86,8 @@ export class Trade {
             this.status = 'closed';
             this.closeDate = this.getDateOfTransactions(transactions);
             this.daysTradeOpen = this.getDaysInTrade();
+        } else {
+            this.rolls++;
         }
     }
 
