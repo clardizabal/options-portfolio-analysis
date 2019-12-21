@@ -63,8 +63,9 @@ const renderSummary = (collection: MetricsWithAverages) => {
   `);
   summary = collection.numberOfTransactions ?(summary + `<tr><th>Number of Transactions</th><td>${collection.numberOfTransactions}</td><tr>`) : summary; 
   summary = collection.amountDeposited > 0 ? (summary + `<tr><th>Total Amount Invested</th><td>$${collection.amountDeposited}</td><tr>`) : summary;
-  summary = collection.averageGrossProfit ? (summary + `<tr><th>Average Gross P/L</th><td>$${collection.averageGrossProfit}</td><tr>`) : summary;
-  summary = collection.averageNetProfit ? (summary + `<tr><th>Average Net P/L</th><td>$${collection.averageNetProfit}</td><tr>`) : summary;
+  summary = collection.averageGrossProfit ? (summary + `<tr><th>Avg. Gross P/L</th><td>$${collection.averageGrossProfit}</td><tr>`) : summary;
+  summary = collection.averageNetProfit ? (summary + `<tr><th>Avg. Net P/L</th><td>$${collection.averageNetProfit}</td><tr>`) : summary;
+  summary = collection.avgNumberOfDaysInTrade ? (summary + `<tr><th>Avg. Number of Days in Trade</th><td>${collection.avgNumberOfDaysInTrade}</td><tr>`) : summary;
   return (`
     <table>
       ${summary}
@@ -137,9 +138,9 @@ export const renderTrades = (collection: Trade[]) => {
         <th>${trade.ticker}</th>
         <td>${strategyMappings[trade.strategy]}</td>
         <td>${trade.profitLoss}</td>
+        <td>${trade.daysTradeOpen}</td>
         <td>${(new Date(trade.date)).toLocaleString()}</td>
         <td>${(new Date(trade.closeDate as string)).toLocaleString()}</td>
-        <td>${trade.daysTradeOpen}</td>
       </tr>
     `);
   });
@@ -149,9 +150,9 @@ export const renderTrades = (collection: Trade[]) => {
         <th>Ticker</th>
         <th>Strategy</th>
         <th>P/L</th>
+        <th>Days In Trade</th>
         <th>Date Opened</th>
         <th>Date Closed</th>
-        <th>Days In Trade</th>
       </tr>
       ${rows}
     </table>
