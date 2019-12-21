@@ -26,6 +26,8 @@ export class Trade {
     commissions: number = 0;
     status: tradeStatus = 'open';
     date: string;
+    closeDate: string | null = null;
+    daysTradeOpen: number = 0;
 
     constructor(legs: TransactionDTO[]) {
         this.ticker = legs.reduce((ticker, leg) => {
@@ -79,7 +81,24 @@ export class Trade {
         });
         if (Object.keys(this.legs).length === 0) {
             this.status = 'closed';
+            this.closeDate = this.getDateOfTransactions(transactions);
+            this.daysTradeOpen = this.getDaysInTrade();
         }
+    }
+
+    getDateOfTransactions = (transactions: transactionsMap) => {
+        const firstKey = Object.keys(transactions)[0];
+        const firstTransaction = transactions[firstKey];
+        return firstTransaction.date;
+    }
+
+    getDaysInTrade = () => {
+        const dayClosed = new Date(this.closeDate as string);
+        const dayOpened = new Date(this.date);
+        const MILLISECONDS = 1000; // in one second
+        const SECONDS = 3600; // in one hour
+        const HOURS = 24; // in one day
+        return Math.round((dayClosed.getTime() - dayOpened.getTime())/(MILLISECONDS*SECONDS*HOURS));
     }
 
     roll = (legs: optionsMap, transactions: transactionsMap) => {
