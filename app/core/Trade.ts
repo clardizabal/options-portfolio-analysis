@@ -28,6 +28,7 @@ export class Trade {
     date: string;
     closeDate: string | null = null;
     daysTradeOpen: number = 0;
+    daysToExpiration: number;
 
     constructor(legs: TransactionDTO[]) {
         this.ticker = legs.reduce((ticker, leg) => {
@@ -35,6 +36,7 @@ export class Trade {
         }, '');
         this.date = legs[0].date;
         this.id = uuid();
+        this.daysToExpiration = this.getDaysToExpiration(legs);
         this.parseTrade(legs);
     }
 
@@ -95,10 +97,21 @@ export class Trade {
     getDaysInTrade = () => {
         const dayClosed = new Date(this.closeDate as string);
         const dayOpened = new Date(this.date);
+        return this.getDaysInBetween(dayOpened, dayClosed);
+    }
+
+    getDaysToExpiration = (transactions: TransactionDTO[]) => {
+        const firstTransaction = transactions[0];
+        const lastDay = new Date(firstTransaction.expirationDate);
+        const firstDay = new Date(firstTransaction.date);
+        return this.getDaysInBetween(firstDay, lastDay);
+    }
+
+    getDaysInBetween = (firstDay: Date, lastDay: Date) => {
         const MILLISECONDS = 1000; // in one second
         const SECONDS = 3600; // in one hour
         const HOURS = 24; // in one day
-        return Math.round((dayClosed.getTime() - dayOpened.getTime())/(MILLISECONDS*SECONDS*HOURS));
+        return Math.round((lastDay.getTime() - firstDay.getTime())/(MILLISECONDS*SECONDS*HOURS));
     }
 
     roll = (legs: optionsMap, transactions: transactionsMap) => {

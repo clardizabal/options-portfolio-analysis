@@ -139,8 +139,10 @@ export const renderTrades = (collection: Trade[]) => {
         <td>${strategyMappings[trade.strategy]}</td>
         <td>${trade.profitLoss}</td>
         <td>${trade.daysTradeOpen}</td>
+        <td>${trade.daysToExpiration}</td>
         <td>${(new Date(trade.date)).toLocaleString()}</td>
         <td>${(new Date(trade.closeDate as string)).toLocaleString()}</td>
+        <td>${trade.daysToExpiration - trade.daysTradeOpen >= 21 ? 'Yes' : 'No'}</td>
       </tr>
     `);
   });
@@ -151,8 +153,10 @@ export const renderTrades = (collection: Trade[]) => {
         <th>Strategy</th>
         <th>P/L</th>
         <th>Days In Trade</th>
+        <th>DTE</th>
         <th>Date Opened</th>
         <th>Date Closed</th>
+        <th>Closed Before 21DTE</th>
       </tr>
       ${rows}
     </table>
