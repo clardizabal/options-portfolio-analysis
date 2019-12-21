@@ -75,6 +75,7 @@ export class Trade {
         });
         this.exerciseOrAssignment(transactions).forEach((transaction) => {
             this.value += transaction.value;
+            this.profitLoss = this.value;
         });
         if (Object.keys(this.legs).length === 0) {
             this.status = 'closed';

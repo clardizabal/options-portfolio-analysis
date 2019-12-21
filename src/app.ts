@@ -1,11 +1,11 @@
 import * as fromStore from './store';
-import { renderPortfolioSummary, renderTickers, renderStrategies } from './utils';
-
+import { renderPortfolioSummary, renderTickers, renderStrategies, renderTrades, strategyMappings } from './utils';
+import {store} from './store';
 const button = document.querySelector('button') as HTMLButtonElement;
-const reducers = {
-    todos: fromStore.reducer,
-};
-const store = new fromStore.Store(reducers);
+// const reducers = {
+//     todos: fromStore.reducer,
+// };
+// export const store = new fromStore.Store(reducers);
 
 button.addEventListener('click', async () => {
     const selectedFiles = (<HTMLInputElement>document.getElementById('csv-file')).files;
@@ -26,7 +26,6 @@ button.addEventListener('click', async () => {
 }, false);
 
 store.subscribe((state: any) => {
-    console.log(state.todos.portfolio);
     const hasSummary = state.todos.portfolio.hasOwnProperty('summary');
     if (hasSummary) {
         const summary = state.todos.portfolio.summary
@@ -41,6 +40,17 @@ store.subscribe((state: any) => {
     if (hasStrategies) {
         const strategies = state.todos.portfolio.strategies;
         renderStrategies(strategies);
+    }
+
+    if (state.todos.selectedFilter) {
+        const selectedFilter = state.todos.selectedFilter;
+        let trades;
+        if (strategyMappings[selectedFilter]) {
+            trades = state.todos.portfolio.tradesByStrategy[selectedFilter];
+        } else {
+            trades = state.todos.portfolio.tradesByTicker[selectedFilter];
+        }
+        renderTrades(trades);
     }
 });
 

@@ -80,7 +80,7 @@ describe('Metrics', () => {
         expect(avgProfitLoss).toBe(45.76);
 
         avgProfitLoss = portfolio.getAverageRealizedProfitLossByStrategy('IRON_CONDOR');
-        expect(avgProfitLoss).toBe(-3.81);
+        expect(avgProfitLoss).toBe(-21.46);
 
         avgProfitLoss = portfolio.getAverageRealizedProfitLossByStrategy('VERTICAL_SPREAD', null);
         expect(avgProfitLoss).toBe(-3.76);
@@ -105,7 +105,7 @@ describe('Metrics', () => {
 
     test('integration - winning %', () => {
         expect(portfolio.getPercentWinnersByStrategy('STRANGLE')).toBe(0.88);
-        expect(portfolio.getPercentWinnersByStrategy('IRON_CONDOR')).toBe(0.71);
+        expect(portfolio.getPercentWinnersByStrategy('IRON_CONDOR')).toBe(0.65);
         expect(portfolio.getPercentWinnersByStrategy('VERTICAL_SPREAD')).toBe(0.67);
         // console.log(portfolio.getTradesByStrategy('NAKED'));
         expect(portfolio.getPercentWinnersByStrategy('NAKED')).toBe(1.00);

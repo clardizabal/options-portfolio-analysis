@@ -2,8 +2,12 @@ import { OverviewMetrics, MetricsWithAverages } from '../app/core/Portfolio'
 const portfolio = document.querySelector('#portfolio') as HTMLElement;
 const tickers = document.querySelector('#tickers') as HTMLElement;
 const strategies = document.querySelector('#strategies') as HTMLElement;
+const trades = document.querySelector('#trade-view') as HTMLElement;
+import * as fromStore from './store';
+import { store } from './store';
+import { Trade } from '../app';
 
-const strategyMappings: {[key: string]: string} = {
+export const strategyMappings: {[key: string]: string} = {
   CUSTOM: 'Custom',
   NAKED: 'Naked',
   VERTICAL_SPREAD: 'Vertical',
@@ -21,6 +25,10 @@ const renderSummary = (collection: MetricsWithAverages) => {
 <tr>
         <th>Total Credit</th>
         <td>${collection.totalExt || 0}</td>
+      </tr>
+      <tr>
+        <th>% return from Premium collected</th>
+        <td>${(collection.returnPercentageOfExt * 100 || 0).toFixed(2)}%</td>
       </tr>
    */
   let summary = (`
@@ -49,11 +57,11 @@ const renderSummary = (collection: MetricsWithAverages) => {
         <td>$${collection.totalCommission || 0}</td>
       </tr>
       <tr>
-        <th>% return from Premium collected</th>
-        <td>${(collection.returnPercentageOfExt * 100 || 0).toFixed(2)}%</td>
+        <th>Commisions and fees % of profit</th>
+        <td>${(collection.feesAndCommissionPercentageOfProfit * 100 || 0).toFixed(2)}%</td>
       </tr>
   `);
-  summary = collection.numberOfTransactions ?(summary + `<tr><th>Number of Transactions</th><td>$${collection.numberOfTransactions}</td><tr>`) : summary; 
+  summary = collection.numberOfTransactions ?(summary + `<tr><th>Number of Transactions</th><td>${collection.numberOfTransactions}</td><tr>`) : summary; 
   summary = collection.amountDeposited > 0 ? (summary + `<tr><th>Total Amount Invested</th><td>$${collection.amountDeposited}</td><tr>`) : summary;
   summary = collection.averageGrossProfit ? (summary + `<tr><th>Average Gross P/L</th><td>$${collection.averageGrossProfit}</td><tr>`) : summary;
   summary = collection.averageNetProfit ? (summary + `<tr><th>Average Net P/L</th><td>$${collection.averageNetProfit}</td><tr>`) : summary;
@@ -78,6 +86,7 @@ function toggleSummary(collection: MetricsWithAverages, id: string) {
     summary.innerHTML = '';
     summary.innerHTML = renderSummary(collection)
   }
+  store.dispatch(new fromStore.SelectFilter(id));
 }
 
 export const renderPortfolioSummary = (collection: OverviewMetrics) => {
@@ -116,6 +125,33 @@ export const renderStrategies = (collection: {[key: string]: MetricsWithAverages
     const link = links[i];
     link.onclick = toggleSummary.bind(null, collection[link.id], link.id);
   }
+}
+
+export const renderTrades = (collection: Trade[]) => {
+  console.log(collection);
+  trades.innerHTML = '';
+  let rows = '';
+  collection.forEach((trade) => {
+    rows += (`
+      <tr>
+        <th>${trade.ticker}</th>
+        <td>${strategyMappings[trade.strategy]}</td>
+        <td>${trade.profitLoss}</td>
+        <td>${(new Date(trade.date)).toLocaleString()}</td>
+      </tr>
+    `);
+  });
+  trades.innerHTML = (`
+    <table>
+      <tr>
+        <th>Ticker</th>
+        <th>Strategy</th>
+        <th>P/L</th>
+        <th>Date Opened</th>
+      </tr>
+      ${rows}
+    </table>
+  `);
 }
 
 const $ = function (selector: any) {

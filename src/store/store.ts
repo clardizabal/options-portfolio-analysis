@@ -1,5 +1,6 @@
-  
-export class Store {
+import {reducer} from './reducers';
+
+class Store {
     private subscribers: Function[];
     private reducers: { [key: string]: Function };
     private state: { [key: string]: any };
@@ -39,3 +40,7 @@ export class Store {
       return newState;
     }
   }
+
+export const store = new Store({
+    todos: reducer,
+});

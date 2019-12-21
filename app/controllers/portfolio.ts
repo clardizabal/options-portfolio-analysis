@@ -1,5 +1,5 @@
 import { Transaction, Portfolio } from "..";
-import { readUploadedCsvFile } from "../core";
+import { readUploadedCsvFile, Strategies } from "../core";
 
 // import db from '../db';
 // import jwt from 'jsonwebtoken';
@@ -21,12 +21,21 @@ const PortfolioController = {
     portfolio.parseTransactions(transactions);
     const summary = portfolio.getPortfolioValues();
     const tickers = portfolio.getMetricsByTicker();
+    const tradesByTicker: any = {};
+    Object.keys(tickers).forEach((ticker) => {
+      tradesByTicker[ticker] = portfolio.getTradesByTicker(ticker);
+    });
     const strategies = portfolio.getMetricsByStrategy();
-    
+    const tradesByStrategy: any = {};
+    Object.keys(strategies).forEach((strategy) => {
+      tradesByStrategy[strategy] = portfolio.getTradesByStrategy(strategy as Strategies);
+    });
     return res.status(SUCCESS_CODE).send({
       summary,
       tickers,
       strategies,
+      tradesByTicker,
+      tradesByStrategy,
     });
   },
 }

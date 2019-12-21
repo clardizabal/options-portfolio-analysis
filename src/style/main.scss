@@ -19,7 +19,7 @@ body {
             margin: 0 auto;
             flex-direction: column;
             // background: pink;
-            width: 1176px;
+            width: 1280px;
             padding-top: 20px;
             flex-direction: column;
             .row {
@@ -39,7 +39,7 @@ body {
                 display: flex;
                 .control-view {
                     width: 65%;
-                    #portfolio, #tickers, #strategies {
+                    #portfolio, #tickers, #strategies, #summary-view {
                         margin-bottom: 20px;
                     }
                     #tickers, #strategies {

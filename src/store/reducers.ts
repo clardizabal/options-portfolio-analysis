@@ -5,6 +5,7 @@ export const initialState = {
   loading: false,
   data: [{ label: 'Eat pizza', complete: false }],
   portfolio: {},
+  selectedFilter: '',
 };
 
 export function reducer(
@@ -18,6 +19,13 @@ export function reducer(
         ...state,
         portfolio,
       };
+    }
+
+    case fromActions.SELECT_FILTER: {
+      return {
+        ...state,
+        selectedFilter: action.payload,
+      }
     }
   }
 
