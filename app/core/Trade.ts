@@ -82,13 +82,9 @@ export class Trade {
             this.value += transaction.value;
             this.profitLoss = this.value;
         });
-        if (Object.keys(this.legs).length === 0) {
-            this.status = 'closed';
-            this.closeDate = this.getDateOfTransactions(transactions);
-            this.daysTradeOpen = this.getDaysInTrade();
-        } else {
-            this.rolls++;
-        }
+        this.status = 'closed';
+        this.closeDate = this.getDateOfTransactions(transactions);
+        this.daysTradeOpen = this.getDaysInTrade();
     }
 
     getDateOfTransactions = (transactions: transactionsMap) => {
@@ -125,6 +121,7 @@ export class Trade {
             this.value += legs[leg].value;
         });
         this.status = 'open';
+        this.rolls++;
     }
 
     setMaxLoss = () => {

@@ -14,6 +14,7 @@ export const strategyMappings: {[key: string]: string} = {
   IRON_CONDOR: 'Iron Condor',
   STRANGLE: 'Strangle',
   CALENDAR: 'Calendar',
+  DIAGONAL: 'Diagonal',
 }
 
 const renderSummary = (collection: MetricsWithAverages) => {
@@ -66,6 +67,7 @@ const renderSummary = (collection: MetricsWithAverages) => {
   summary = collection.averageGrossProfit ? (summary + `<tr><th>Avg. Gross P/L</th><td>$${collection.averageGrossProfit}</td><tr>`) : summary;
   summary = collection.averageNetProfit ? (summary + `<tr><th>Avg. Net P/L</th><td>$${collection.averageNetProfit}</td><tr>`) : summary;
   summary = collection.avgNumberOfDaysInTrade ? (summary + `<tr><th>Avg. Number of Days in Trade</th><td>${collection.avgNumberOfDaysInTrade}</td><tr>`) : summary;
+  summary = collection.averageDTE ? (summary + `<tr><th>Avg. DTE</th><td>${collection.averageDTE}</td><tr>`) : summary;
   return (`
     <table>
       ${summary}
@@ -138,8 +140,8 @@ export const renderTrades = (collection: Trade[]) => {
         <th>${trade.ticker}</th>
         <td>${strategyMappings[trade.strategy]}</td>
         <td>${trade.profitLoss}</td>
-        <td>${trade.daysTradeOpen}</td>
         <td>${trade.daysToExpiration}</td>
+        <td>${trade.daysTradeOpen}</td>
         <td>${(new Date(trade.date)).toLocaleString()}</td>
         <td>${(new Date(trade.closeDate as string)).toLocaleString()}</td>
         <td>${trade.daysToExpiration - trade.daysTradeOpen >= 21 ? 'Yes' : 'No'}</td>
@@ -153,11 +155,11 @@ export const renderTrades = (collection: Trade[]) => {
         <th>Ticker</th>
         <th>Strategy</th>
         <th>P/L</th>
-        <th>Days In Trade</th>
         <th>DTE</th>
+        <th>Days In Trade</th>
         <th>Date Opened</th>
         <th>Date Closed</th>
-        <th>Closed Before 21DTE</th>
+        <th>Closed - 21DTE</th>
         <th>Rolls</th>
       </tr>
       ${rows}

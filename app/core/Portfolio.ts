@@ -38,13 +38,14 @@ export interface OverviewMetrics {
     totalCommission: number,
     totalExt: number,
     returnPercentageOfExt: number,
-    winningPercentage: number
+    winningPercentage: number,
 }
 
 export interface MetricsWithAverages extends OverviewMetrics {
     averageGrossProfit: number;
     averageNetProfit: number;
     avgNumberOfDaysInTrade: number;
+    averageDTE: number,
 }
 
 export class Portfolio {
@@ -206,7 +207,11 @@ export class Portfolio {
 
     getTradesByStrategy = (strategy: Strategies, type: 'credit' | 'debit'  | null = 'credit'): any[] => {
         return Object.keys(this.trades).filter((id) => {
-            if (type !== null) {
+            if (strategy === 'DIAGONAL' || strategy === 'CALENDAR') {
+                return this.trades[id].strategy === strategy
+                && this.trades[id].status === 'closed'
+                && this.trades[id].type === 'debit';
+            } else if (type !== null) {
                 return this.trades[id].strategy === strategy
                     && this.trades[id].status === 'closed'
                     && this.trades[id].type === type;
@@ -331,10 +336,13 @@ export class Portfolio {
                 averageGrossProfit: 0,
                 averageNetProfit: 0,
                 avgNumberOfDaysInTrade: 0,
+                averageDTE: 0,
             }
             let totalDaysInTrade = 0;
+            let totalDte = 0;
             tradesGroupedByStrategy[strategy] = tradesGroupedByStrategy[strategy].reduce((sum: any, trade: Trade) => {
                 totalDaysInTrade += trade.daysTradeOpen;
+                totalDte += trade.daysToExpiration;
                 // TODO: value is correct but profitLoss is incorrect for some trades because trade does not calculate expiration/assignments
                 sum.grossProfit = addDecimal(sum.grossProfit, trade.value);
                 sum.netProfit = addDecimal(sum.netProfit, trade.getRealizedProfitLoss());
@@ -352,6 +360,7 @@ export class Portfolio {
                 sum.averageGrossProfit = Number((sum.grossProfit / sum.numberOfTrades).toFixed(2));
                 sum.averageNetProfit = Number((sum.netProfit / sum.numberOfTrades).toFixed(2));
                 sum.avgNumberOfDaysInTrade = Number((totalDaysInTrade / sum.numberOfTrades).toFixed(2));
+                sum.averageDTE = Number((totalDte / sum.numberOfTrades).toFixed(2));
                 return sum;
             }, initialOutput);
         });
@@ -381,11 +390,14 @@ export class Portfolio {
                 averageNetProfit: 0,
                 averageGrossProfit: 0,
                 avgNumberOfDaysInTrade: 0,
+                averageDTE: 0,
             }
             let totalDaysInTrade = 0;
+            let totalDte = 0;
 
             tradesGroupedByTicker[ticker] = tradesGroupedByTicker[ticker].reduce((sum: any, trade: Trade) => {
                 totalDaysInTrade += trade.daysTradeOpen;
+                totalDte += trade.daysToExpiration;
                 // TODO: value is correct but profitLoss is incorrect for some trades because trade does not calculate expiration/assignments
                 sum.grossProfit = addDecimal(sum.grossProfit, trade.value);
                 sum.netProfit = addDecimal(sum.netProfit, trade.getRealizedProfitLoss());
@@ -404,6 +416,7 @@ export class Portfolio {
                 sum.averageGrossProfit = Number((sum.grossProfit / sum.numberOfTrades).toFixed(2));
                 sum.averageNetProfit = Number((sum.netProfit / sum.numberOfTrades).toFixed(2));
                 sum.avgNumberOfDaysInTrade = Number((totalDaysInTrade / sum.numberOfTrades).toFixed(2));
+                sum.averageDTE = Number((totalDte / sum.numberOfTrades).toFixed(2));
                 return sum;
             }, initialOutput as MetricsWithAverages);
         });

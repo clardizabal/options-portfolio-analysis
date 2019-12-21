@@ -28,7 +28,14 @@ const PortfolioController = {
     const strategies = portfolio.getMetricsByStrategy();
     const tradesByStrategy: any = {};
     Object.keys(strategies).forEach((strategy) => {
-      tradesByStrategy[strategy] = portfolio.getTradesByStrategy(strategy as Strategies);
+      if (strategy as Strategies === 'VERTICAL_SPREAD') {
+        tradesByStrategy[strategy] = [
+          ...portfolio.getTradesByStrategy(strategy as Strategies, 'credit'),
+          ...portfolio.getTradesByStrategy(strategy as Strategies, 'debit'),
+        ];
+      } else {
+        tradesByStrategy[strategy] = portfolio.getTradesByStrategy(strategy as Strategies);
+      }
     });
     return res.status(SUCCESS_CODE).send({
       summary,
