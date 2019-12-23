@@ -126,6 +126,13 @@ export class Portfolio {
 
     getTradesByTicker = (ticker: string) => {
         return Object.keys(this.trades).filter((id) => {
+            return this.trades[id].ticker === ticker
+                && this.trades[id].status === 'closed';
+        }).map((id) => this.trades[id]);
+    }
+
+    getAllTradesByTicker = (ticker: string) => {
+        return Object.keys(this.trades).filter((id) => {
             return this.trades[id].ticker === ticker;
         }).map((id) => this.trades[id]);
     }
@@ -265,7 +272,7 @@ export class Portfolio {
     }
 
     getPercentWinnersByTicker = (ticker: string) => {
-        const trades = this.getTradesByTicker(ticker)
+        const trades = this.getTradesByTicker(ticker);
         const numberOfTrades = trades.length;
         const numberOfWinningTrades = trades.filter((trade) => (trade.getRealizedProfitLoss() > 0)).length;
         return Number((numberOfWinningTrades / numberOfTrades).toFixed(2));

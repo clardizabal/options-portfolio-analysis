@@ -27,7 +27,7 @@ describe('Metrics', () => {
             expect(trade.strategy).toBe('STRANGLE');
         })
         expect(strangleTrades.length).toBe(17);
-        console.log(portfolio.getTradesByStrategy('IRON_CONDOR'));
+        // console.log(portfolio.getTradesByStrategy('IRON_CONDOR'));
     });
 
     test('integration - get trades by ticker', () => {

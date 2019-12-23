@@ -97,12 +97,15 @@ export const renderPortfolioSummary = (collection: OverviewMetrics) => {
   portfolio.innerHTML = renderSummary(collection as MetricsWithAverages);
 }
 
-export const renderTickers = (collection: {[key: string]: MetricsWithAverages}) => {
+export const renderTickers = (
+  collection: {[key: string]: MetricsWithAverages}, selectedFilter: string) => {
   tickers.innerHTML = '';
   Object.keys(collection).forEach((underlying: string) => {
     let shade = collection[underlying].grossProfit > 0 ? 'positive' : 'negative';
+    const selected = selectedFilter === underlying ? 'selected' : '';
+    const names = classNames('ticker-label', 'tile', shade, selected);
     tickers.innerHTML += (`
-      <div class="ticker-label tile ${shade}" id="${underlying}">
+      <div class="${names}" id="${underlying}">
         <div>${underlying}</div>
         <div>${collection[underlying].netProfit}</div>
       </div>
@@ -115,12 +118,24 @@ export const renderTickers = (collection: {[key: string]: MetricsWithAverages}) 
   }
 }
 
-export const renderStrategies = (collection: {[key: string]: MetricsWithAverages}) => {
+const classNames = (...names: string[]): string => {
+  return names.reduce((sum, item) => {
+    return sum += ` ${item}`;
+  }, '');
+}
+
+export const renderStrategies = (
+  collection: {[key: string]: MetricsWithAverages},
+  selectedFilter: string) => {
   strategies.innerHTML = '';
   Object.keys(collection).forEach((strategy) => {
     let shade = collection[strategy].grossProfit > 0 ? 'positive' : 'negative';
+    const selected = selectedFilter === strategy ? 'selected' : '';
+    const names = classNames('strategy-label', 'tile', shade, selected);
     strategies.innerHTML += (`
-      <div class="strategy-label tile ${shade}" id="${strategy}">${strategyMappings[strategy]}</div>
+      <div class="${names}" id="${strategy}">
+        ${strategyMappings[strategy]}
+      </div>
     `);
   });
   const links = $('#strategies').getElementsByClassName('strategy-label');
@@ -156,7 +171,7 @@ export const renderTrades = (collection: Trade[]) => {
         <th>Strategy</th>
         <th>P/L</th>
         <th>DTE</th>
-        <th>Days In Trade</th>
+        <th>Days</th>
         <th>Date Opened</th>
         <th>Date Closed</th>
         <th>Closed - 21DTE</th>

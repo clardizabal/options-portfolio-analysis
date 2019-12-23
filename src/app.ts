@@ -26,6 +26,17 @@ button.addEventListener('click', async () => {
 }, false);
 
 store.subscribe((state: any) => {
+    const selectedFilter = state.todos.selectedFilter;
+    if (selectedFilter) {
+        let trades;
+        if (strategyMappings[selectedFilter]) {
+            trades = state.todos.portfolio.tradesByStrategy[selectedFilter];
+        } else {
+            trades = state.todos.portfolio.tradesByTicker[selectedFilter];
+        }
+        renderTrades(trades);
+    }
+
     const hasSummary = state.todos.portfolio.hasOwnProperty('summary');
     if (hasSummary) {
         const summary = state.todos.portfolio.summary
@@ -34,23 +45,12 @@ store.subscribe((state: any) => {
     const hasTickers = state.todos.portfolio.hasOwnProperty('tickers');
     if (hasTickers) {
         const tickers = state.todos.portfolio.tickers;
-        renderTickers(tickers);
+        renderTickers(tickers, selectedFilter);
     }
     const hasStrategies = state.todos.portfolio.hasOwnProperty('strategies');
     if (hasStrategies) {
         const strategies = state.todos.portfolio.strategies;
-        renderStrategies(strategies);
-    }
-
-    if (state.todos.selectedFilter) {
-        const selectedFilter = state.todos.selectedFilter;
-        let trades;
-        if (strategyMappings[selectedFilter]) {
-            trades = state.todos.portfolio.tradesByStrategy[selectedFilter];
-        } else {
-            trades = state.todos.portfolio.tradesByTicker[selectedFilter];
-        }
-        renderTrades(trades);
+        renderStrategies(strategies, selectedFilter);
     }
 });
 

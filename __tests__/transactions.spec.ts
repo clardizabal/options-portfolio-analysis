@@ -415,14 +415,14 @@ describe('Evaluate Portfolio', () => {
     });
 
     test('evaluate a custom trade', () => {
-        const customTrades = portfolio.getTradesByTicker('EWZ');
+        const customTrades = portfolio.getAllTradesByTicker('EWZ');
         const customTrade = customTrades[0];
         expect(customTrade).toBeInstanceOf(Trade);
         expect(customTrade.strategy).toBe('CUSTOM');
     });
 
     test('close trade partial quantity', () => {
-        const nakedTrades = portfolio.getTradesByTicker('X');
+        const nakedTrades = portfolio.getAllTradesByTicker('X');
         nakedTrades.forEach((trade) => {
             if (trade.strategy === 'NAKED' && trade.date === '2019-11-22T11:35:06-0500') {
                 expect(trade.legs['13PUT1/17/2020'].quantity).toBe(1);
@@ -435,7 +435,7 @@ describe('Evaluate Portfolio', () => {
     
     test('updates trade with adjusted legs', () => {
         // TODO: have a function that returns all trades of an underlying mapped by id
-        const adjustedTrades = portfolio.getTradesByTicker('QQQ');
+        const adjustedTrades = portfolio.getAllTradesByTicker('QQQ');
         const adjustedTrade = adjustedTrades[0];
         expect(adjustedTrade).toBeInstanceOf(Trade);
         const mappedLegs = adjustedTrade.legs;
@@ -446,7 +446,7 @@ describe('Evaluate Portfolio', () => {
     });
 
     test('closing a trade', () => {
-        const snapTrades = portfolio.getTradesByTicker('SNAP');
+        const snapTrades = portfolio.getAllTradesByTicker('SNAP');
         const snapTrade = snapTrades[0];
         expect(snapTrade).toBeInstanceOf(Trade);
         expect(snapTrade.value).toBe(31);
@@ -486,7 +486,7 @@ describe('Evaluate Portfolio', () => {
             ...unusedColumns,
         }];
         portfolio.parseTransactions(closingTransactions);
-        const qqqTrades = portfolio.getTradesByTicker('QQQ');
+        const qqqTrades = portfolio.getAllTradesByTicker('QQQ');
         const qqqTrade = qqqTrades[0];
         expect(qqqTrade).toBeInstanceOf(Trade);
         expect(qqqTrade.value).toBe(-111);
@@ -559,14 +559,14 @@ describe('Evaluate Portfolio', () => {
             },
         ];
 
-        let xTrades = portfolio.getTradesByTicker('X');
+        let xTrades = portfolio.getAllTradesByTicker('X');
         let xTrade = xTrades[0];
         let xLegs = xTrade.legs;
         expect(xLegs['13PUT7/19/2019']).toBeInstanceOf(Option);
         expect(xLegs['15CALL7/19/2019']).toBeInstanceOf(Option);
         portfolio.parseTransactions(rollTransactions);
         
-        xTrades = portfolio.getTradesByTicker('X');
+        xTrades = portfolio.getAllTradesByTicker('X');
         xTrade = xTrades[0];
         expect(xTrade).toBeInstanceOf(Trade);
         expect(xTrade.value).toBe(196);
