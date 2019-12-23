@@ -82,9 +82,11 @@ export class Trade {
             this.value += transaction.value;
             this.profitLoss = this.value;
         });
-        this.status = 'closed';
-        this.closeDate = this.getDateOfTransactions(transactions);
-        this.daysTradeOpen = this.getDaysInTrade();
+        if (Object.keys(this.legs).length === 0) {
+            this.status = 'closed';
+            this.closeDate = this.getDateOfTransactions(transactions);
+            this.daysTradeOpen = this.getDaysInTrade();
+        }
     }
 
     getDateOfTransactions = (transactions: transactionsMap) => {
