@@ -12,6 +12,24 @@ import {
 
 type optionsMap = {[key: string] : Option};
 
+const futuresMap = {
+    '/6A': 'currency',
+    '/6B': 'currency',
+    '/6C': 'currency',
+    '/6E': 'currency',
+    '/6J': 'currency',
+    '/CL': 'energy',
+    '/NG': 'energy',
+    '/GC': 'metal',
+    '/SI': 'metal',
+    '/ZB': 'financial',
+    '/ZN': 'financial',
+    '/ZS': 'soft',
+    '/ZC': 'soft',
+    '/ZW': 'soft',
+    '/ES': 'index',
+    '/NQ': 'index',
+}
 export class Trade {
     id: string;
     ticker: string = '';
@@ -32,13 +50,22 @@ export class Trade {
     rolls: number = 0;
 
     constructor(legs: TransactionDTO[]) {
-        this.ticker = legs.reduce((ticker, leg) => {
-            return ticker || leg.ticker;
-        }, '');
+        // this.ticker = legs.reduce((ticker, leg) => {
+        //     return ticker || leg.ticker;
+        // }, '');
+        this.ticker = this.groupTicker(legs[0].ticker);
         this.date = legs[0].date;
         this.id = uuid();
         this.daysToExpiration = this.getDaysToExpiration(legs);
         this.parseTrade(legs);
+    }
+
+    private groupTicker = (ticker: string) => {
+        const group = Object.keys(futuresMap).filter((future) => {
+            return ticker.match(future);
+        });
+
+        return group.length === 1 ? group[0] : ticker;
     }
 
     parseTrade = (legs: TransactionDTO[]) => {
@@ -62,7 +89,7 @@ export class Trade {
         const legsToClose = optionsToClose(transactions);
         legsToClose.forEach((leg: string) => {
             if (this.legs.hasOwnProperty(leg)) {
-                this.value += legs[leg].value;
+                this.value = addDecimal(this.value, legs[leg].value);
                 this.profitLoss = this.value; 
                 if (legs[leg].quantity === this.legs[leg].quantity) {
                     delete this.legs[leg];
@@ -79,7 +106,7 @@ export class Trade {
             }
         });
         this.exerciseOrAssignment(transactions).forEach((transaction) => {
-            this.value += transaction.value;
+            this.value = addDecimal(this.value, transaction.value);
             this.profitLoss = this.value;
         });
         if (Object.keys(this.legs).length === 0) {
@@ -120,7 +147,7 @@ export class Trade {
         // console.log('open after we roll: ', legsToOpen);
         legsToOpen.forEach((leg: string) => {
             this.legs[leg] = legs[leg];
-            this.value += legs[leg].value;
+            this.value = addDecimal(this.value, legs[leg].value);
         });
         this.status = 'open';
         this.rolls++;
@@ -202,7 +229,7 @@ export class Trade {
 
     private setTradeValue = (legs: TransactionDTO[]) => {
         this.value = legs.reduce((sum, transaction) => {
-            return sum + transaction.value;
+            return addDecimal(sum, transaction.value);
         }, 0);
         this.originalCreditReceived = this.value;
     }

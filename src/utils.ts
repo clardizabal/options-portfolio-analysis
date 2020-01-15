@@ -15,6 +15,7 @@ export const strategyMappings: {[key: string]: string} = {
   STRANGLE: 'Strangle',
   CALENDAR: 'Calendar',
   DIAGONAL: 'Diagonal',
+  STRADDLE: 'Straddle',
 }
 
 const renderSummary = (collection: MetricsWithAverages) => {
@@ -39,15 +40,15 @@ const renderSummary = (collection: MetricsWithAverages) => {
       </tr>
       <tr>
         <th>Realized Gross Profit</th>
-        <td>$${collection.grossProfit || 0}</td>
+        <td class=${collection.grossProfit > 0 ? 'positive' : 'negative'}>$${collection.grossProfit || 0}</td>
       </tr>
       <tr>
         <th>Realized Net Profit</th>
-        <td>$${collection.netProfit || 0}</td>
+        <td class=${collection.netProfit > 0 ? 'positive' : 'negative'}>$${collection.netProfit || 0}</td>
       </tr>
       <tr>
         <th>Winning %</th>
-        <td>${(collection.winningPercentage * 100 || 0).toFixed(2)}%</td>
+        <td class=${collection.winningPercentage > 0.5 ? 'positive' : 'negative'}>${(collection.winningPercentage * 100 || 0).toFixed(2)}%</td>
       </tr>
       <tr>
         <th>Total Fees</th>
@@ -60,6 +61,10 @@ const renderSummary = (collection: MetricsWithAverages) => {
       <tr>
         <th>Commisions and fees % of profit</th>
         <td>${(collection.feesAndCommissionPercentageOfProfit * 100 || 0).toFixed(2)}%</td>
+      </tr>
+      <tr>
+        <th>Trades Open</th>
+        <td>${collection.openTrades || 0}</td>
       </tr>
   `);
   summary = collection.numberOfTransactions ?(summary + `<tr><th>Number of Transactions</th><td>${collection.numberOfTransactions}</td><tr>`) : summary; 
@@ -100,7 +105,7 @@ export const renderPortfolioSummary = (collection: OverviewMetrics) => {
 export const renderTickers = (
   collection: {[key: string]: MetricsWithAverages}, selectedFilter: string) => {
   tickers.innerHTML = '';
-  Object.keys(collection).forEach((underlying: string) => {
+  Object.keys(collection).sort().forEach((underlying: string) => {
     let shade = collection[underlying].grossProfit > 0 ? 'positive' : 'negative';
     const selected = selectedFilter === underlying ? 'selected' : '';
     const names = classNames('ticker-label', 'tile', shade, selected);
@@ -154,7 +159,7 @@ export const renderTrades = (collection: Trade[]) => {
       <tr>
         <th>${trade.ticker}</th>
         <td>${strategyMappings[trade.strategy]}</td>
-        <td>${trade.profitLoss}</td>
+        <td class=${trade.profitLoss > 0 ? 'positive' : 'negative'}>${trade.profitLoss}</td>
         <td>${trade.daysToExpiration}</td>
         <td>${trade.daysTradeOpen}</td>
         <td>${(new Date(trade.date)).toLocaleString()}</td>

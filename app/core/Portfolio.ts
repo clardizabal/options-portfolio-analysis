@@ -25,20 +25,21 @@ export interface TradeLog {
 }
 
 export interface OverviewMetrics {
-    numberOfTransactions: number,
-    numberOfTrades: number,
-    feeAdjustments: number,
-    grossProfit: number,
-    netProfit: number,
-    feesAndCommissionPercentageOfProfit: number,
-    commissionPercentageOfProfit: number,
-    feesPercentageOfProfit: number,
-    amountDeposited: number,
-    totalFees: number,
-    totalCommission: number,
-    totalExt: number,
-    returnPercentageOfExt: number,
-    winningPercentage: number,
+    numberOfTransactions: number;
+    numberOfTrades: number;
+    feeAdjustments: number;
+    grossProfit: number;
+    netProfit: number;
+    feesAndCommissionPercentageOfProfit: number;
+    commissionPercentageOfProfit: number;
+    feesPercentageOfProfit: number;
+    amountDeposited: number;
+    totalFees: number;
+    totalCommission: number;
+    totalExt: number;
+    returnPercentageOfExt: number;
+    winningPercentage: number;
+    openTrades: number;
 }
 
 export interface MetricsWithAverages extends OverviewMetrics {
@@ -70,44 +71,50 @@ export class Portfolio {
             const currentTransaction = new TransactionDTO(transaction);
             this.totalCommission += currentTransaction.commissions;
             this.totalFees = addDecimal(this.totalFees, currentTransaction.fees);
-            if (transaction['Type'] === 'Money Movement') {
-                const description = transaction['Description'];
-                if (description.match('ACH DEPOSIT') !== null) {
-                    this.amountDeposited = addDecimal(this.amountDeposited, currentTransaction.value);
-                } else {
-                    this.feeAdjustments = addDecimal(this.feeAdjustments, currentTransaction.value);
-                }
-            } else if (transaction['Type'] === 'Trade'
-                || transaction['Type'] === 'Receive Deliver') {
-                if (queue.length === 0) {
-                    queue.push(currentTransaction);
-                } else if (shouldBeOneTrade(currentTransaction.date, lastTransaction.date)) {
-                    queue.push(currentTransaction);
-                } else {
-                    const currentTrade = new Trade(queue);
-                    if (openingTrade(queue)) {
-                        this.addTrade(currentTrade);
-                    } else if (closingTrade(queue)){
-                        const transactions = parseLegs(queue);
-                        this.closeTrade(currentTrade, transactions);
-                    } else if (adjustmentTrade(queue)) {
-                        const transactions = parseLegs(queue);
-                        this.adjustTrade(currentTrade, transactions);
-                    } else if (handleExerciesOrAssignment(queue)) {
-                        const transactions = parseLegs(queue);
-                        this.handleExerciesOrAssignment(currentTrade, transactions);
+            // Skipping futures for now
+            if (transaction['Instrument Type'] !== 'Future') {
+                if (transaction['Type'] === 'Money Movement') {
+                    const description = transaction['Description'];
+                    if (description.match('ACH DEPOSIT') !== null) {
+                        this.amountDeposited = addDecimal(this.amountDeposited, currentTransaction.value);
                     } else {
-                        console.log('MISSING A CASE!');
+                        this.feeAdjustments = addDecimal(this.feeAdjustments, currentTransaction.value);
                     }
-                    queue = [currentTransaction];
+                } else if (transaction['Type'] === 'Trade'
+                    || transaction['Type'] === 'Receive Deliver') {
+                    if (queue.length === 0) {
+                        queue.push(currentTransaction);
+                    } else if (shouldBeOneTrade(currentTransaction.date, lastTransaction.date)) {
+                        queue.push(currentTransaction);
+                    } else {
+                        const currentTrade = new Trade(queue);
+                        if (openingTrade(queue)) {
+                            this.addTrade(currentTrade);
+                        } else if (closingTrade(queue)){
+                            const transactions = parseLegs(queue);
+                            this.closeTrade(currentTrade, transactions);
+                        } else if (adjustmentTrade(queue)) {
+                            const transactions = parseLegs(queue);
+                            this.adjustTrade(currentTrade, transactions);
+                        } else if (handleExerciesOrAssignment(queue)) {
+                            const transactions = parseLegs(queue);
+                            this.handleExerciesOrAssignment(currentTrade, transactions);
+                        } else {
+                            console.log('MISSING A CASE!', transaction);
+                        }
+                        // Skip symbol change and futures for now, TODO: make case for symbol change and future
+                        if (!transaction['Description'].match('Symbol change')) {
+                            queue = [currentTransaction];
+                        }
+                    }
+                    lastTransaction = currentTransaction;
+                    if (transaction['Type'] === 'Trade') {
+                        this.numberOfTransactions++;
+                    }
+                } else {
+                    console.log('SOMETHING WENT WRONG');
+                    console.log(transaction);
                 }
-                lastTransaction = currentTransaction;
-                if (transaction['Type'] === 'Trade') {
-                    this.numberOfTransactions++;
-                }
-            } else {
-                console.log('SOMETHING WENT WRONG');
-                console.log(transaction);
             }
         });
 
@@ -172,7 +179,7 @@ export class Portfolio {
             id: trade.id,
         }
         this.tradeHistory.push(tradeLog);
-        this.profit += trade.value;
+        this.profit = addDecimal(this.profit, trade.value);
     }
 
     // Adjust an existing trade
@@ -194,6 +201,9 @@ export class Portfolio {
         const totalExt = this.getTotalExt();
         const totalFeesAndCommissions = this.totalFees + this.totalCommission;
         const numberOfWinningTrades = this.tradeHistory.filter((trade) => trade.profitLoss > 0).length;
+        const openTrades = Object.keys(this.trades).filter((trade) => {
+            return this.trades[trade].status === 'open';
+        });
         return {
             numberOfTransactions: this.numberOfTransactions,
             numberOfTrades: this.numberOfTrades,
@@ -209,6 +219,7 @@ export class Portfolio {
             totalExt,
             returnPercentageOfExt: this.profit / totalExt,
             winningPercentage: numberOfWinningTrades / this.numberOfTrades,
+            openTrades: openTrades.length,
         }
     }
 
@@ -325,6 +336,10 @@ export class Portfolio {
     getMetricsByStrategy = (): {[key: string]: MetricsWithAverages} => {
         const tradesGroupedByStrategy = this.getTradesGroupedByStrategy();
         Object.keys(tradesGroupedByStrategy).forEach((strategy) => {
+            const openTrades = Object.keys(this.trades).filter((trade) => {
+                return this.trades[trade].status === 'open'
+                    && this.trades[trade].strategy === strategy;
+            });
             const initialOutput: MetricsWithAverages = {
                 numberOfTransactions: 0,
                 numberOfTrades: 0,
@@ -344,7 +359,9 @@ export class Portfolio {
                 averageNetProfit: 0,
                 avgNumberOfDaysInTrade: 0,
                 averageDTE: 0,
+                openTrades: openTrades.length,
             }
+            
             let totalDaysInTrade = 0;
             let totalDte = 0;
             tradesGroupedByStrategy[strategy] = tradesGroupedByStrategy[strategy].reduce((sum: any, trade: Trade) => {
@@ -379,6 +396,10 @@ export class Portfolio {
         const tradesGroupedByTicker = this.getTradesGroupedByTicker();
         
         this.getAllTickers().forEach((ticker) => {
+            const openTrades = Object.keys(this.trades).filter((trade) => {
+                return this.trades[trade].status === 'open'
+                    && this.trades[trade].ticker === ticker;
+            });
             const initialOutput: MetricsWithAverages = {
                 numberOfTransactions: 0,
                 numberOfTrades: 0,
@@ -398,6 +419,7 @@ export class Portfolio {
                 averageGrossProfit: 0,
                 avgNumberOfDaysInTrade: 0,
                 averageDTE: 0,
+                openTrades: openTrades.length,
             }
             let totalDaysInTrade = 0;
             let totalDte = 0;

@@ -21,7 +21,7 @@ export const strategyStrings = [
     'CALENDAR',
     'DIAGONAL',
 ];
-export type InstrumentType = 'Equity Option';
+export type InstrumentType = 'Equity Option' | 'Future';
 export type CallOrPut = 'CALL' | 'PUT';
 export type tradeStatus = 'open'
     | 'closed'
